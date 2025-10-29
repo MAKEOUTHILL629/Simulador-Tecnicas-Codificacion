@@ -1,0 +1,7 @@
+# Sample text data for testing
+The quick brown fox jumps over the lazy dog.
+
+# Information Theory
+Claude Shannon's 1948 paper "A Mathematical Theory of Communication" laid the foundation for 
+information theory. The concept of entropy as a measure of information content and the 
+Shannon-Hartley theorem for channel capacity are fundamental to modern communication systems.
