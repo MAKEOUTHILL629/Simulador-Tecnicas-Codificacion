@@ -102,6 +102,20 @@
 - ⚠️ **Pendiente**: Extensión a imagen/audio/video (estructura lista, falta integración)
 - ⚠️ **Pendiente**: Assets de muestra (imágenes Lena/Baboon, audio WAV)
 
+### 1.6. Corrección Crítica de Huffman (Sesión 5)
+- ✅ **Bug identificado por usuario**: Con Huffman + texto largo, la reconstrucción mostraba caracteres basura (��ߋ���) a pesar de BER=0
+- ✅ **Causa raíz identificada**: 
+  - Huffman estaba codificando el **string binario** ("01001000...") en lugar del texto original
+  - Esto comprimía '0' y '1' como símbolos, no los caracteres de texto reales
+  - Al decodificar, se intentaba convertir directamente bits a bytes sin pasar por Huffman decoder
+- ✅ **Solución implementada**:
+  - Modificado `encodeSource()` para codificar `data.original` (texto) con Huffman, no `data.binary`
+  - Agregado flag `isHuffmanEncoded` para rastrear uso de Huffman
+  - Modificado `decodeSource()` para llamar al decoder de Huffman antes de convertir a texto
+  - Actualizado pipeline para pasar `encodedSource` al `decodeSource()` (necesario para acceder al árbol Huffman)
+- ✅ **Resultado**: Huffman ahora funciona correctamente, comprime caracteres de texto reales, texto se reconstruye perfectamente
+- ✅ **Validación de usuario confirmada**: Con configuración de texto largo + Huffman + LDPC + QPSK, el texto ahora se reconstruye idénticamente
+
 ---
 
 ## 2. ¿Qué falta por hacer?
@@ -774,20 +788,20 @@ Este es un proyecto **educativo**. Los algoritmos deben ser:
 - LDPC/Polar: Implementaciones básicas, no optimizadas para producción
 - Codificador Aprendido: Pesos estáticos, no entrenamiento en tiempo real
 
-### 5.4. Estado Actual de Implementación (Actualización 2025-10-29 18:00)
+### 5.4. Estado Actual de Implementación (Actualización 2025-10-29 18:14 UTC)
 
-**Progreso Global: ~90% funcional completado - Simulador estable y listo para producción**
+**Progreso Global: ~92% funcional completado - Simulador estable con Huffman corregido**
 
 ✅ **Completado (100%)**:
-- Documentación: README.md (270 líneas), job.md (828 líneas), manual.md (597 líneas)
+- Documentación: README.md (270 líneas), job.md (actualizado), manual.md (actualizado)
 - Estructura HTML/CSS: Layout de tres columnas, todos los controles, favicon.svg
 - Módulos JavaScript: 9 archivos con algoritmos implementados
 - **Pipeline end-to-end para TEXTO funcionando completamente SIN ERRORES**
+- **Codificación Huffman CORREGIDA**: Ahora comprime texto real, no string binario
 - Modulación: QPSK, 16/64/256-QAM con Gray coding
 - Canal AWGN: Modelo completo con Box-Muller
 - Demodulación suave (LLR) integrada
 - Codificación de canal: LDPC y Polar funcionando
-- Codificación de fuente: Huffman integrado
 - Métricas: BER, SER, Entropía, Información Mutua calculadas y mostradas
 - Teoría de la Información: Entropía, IM, capacidad de canal
 - Visualización: Con fallback cuando Plotly está bloqueado
@@ -797,6 +811,7 @@ Este es un proyecto **educativo**. Los algoritmos deben ser:
 - **Validaciones null/undefined exhaustivas en todas las métricas**
 - **Cálculos de SER con fallback cuando arrays no coinciden**
 - **Sin errores de consola - Producción ready**
+- **Texto largo con Huffman + LDPC + QPSK reconstruye perfectamente ✅**
 
 ⚠️ **Listo pero no integrado (80%)**:
 - Source Coding: Algoritmos DCT, MDCT implementados
@@ -821,7 +836,7 @@ Este es un proyecto **educativo**. Los algoritmos deben ser:
 
 ## 6. Próximos Pasos Inmediatos
 
-**ESTADO**: Simulador básico COMPLETADO ✅ - Sin errores, producción-ready
+**ESTADO**: Simulador básico COMPLETADO ✅ - Sin errores, producción-ready, Huffman funcional
 
 El flujo básico texto→codificación→modulación→canal→demodulación→decodificación→métricas está **FUNCIONANDO PERFECTAMENTE**.
 
@@ -830,6 +845,7 @@ El flujo básico texto→codificación→modulación→canal→demodulación→d
 - Favicon implementado
 - Métricas con validaciones exhaustivas
 - Manejo robusto de edge cases
+- **Huffman encode/decode corregido y validado con texto largo**
 
 **Para expandir funcionalidad** (Próximo agente):
 1. **Agregar imágenes de muestra** (Lena 256×256, Baboon 256×256 en `/assets/images/`)
