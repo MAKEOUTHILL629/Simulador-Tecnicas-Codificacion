@@ -1,5 +1,23 @@
 # Resumen del Proyecto - Simulador 5G/6G
 
+## ⚠️ Instalación Rápida
+
+```bash
+# 1. Instalar dependencias core (funciona en todos los sistemas)
+pip install -r requirements.txt
+
+# 2. Ejecutar ejemplos
+python main.py
+
+# 3. Para interfaz web (opcional - puede requerir build tools en Windows)
+pip install streamlit
+streamlit run app.py
+```
+
+**📝 Problemas en Windows con Streamlit?** Ver `INSTALL.md` para soluciones.
+
+---
+
 ## 📊 Estadísticas del Proyecto
 
 - **Archivos Python**: 16

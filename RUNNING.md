@@ -2,9 +2,19 @@
 
 ## Instalación de Dependencias
 
+### Dependencias Core (Requeridas)
 ```bash
 pip install -r requirements.txt
 ```
+
+### Interfaz Web (Opcional)
+```bash
+pip install streamlit
+```
+
+**⚠️ Nota para Windows:** Si encuentras errores de compilación (PyArrow, CMake, Visual Studio), consulta `INSTALL.md` para soluciones específicas de Windows.
+
+**Alternativa:** El simulador funciona completamente sin Streamlit usando `python main.py`
 
 ## Ejecutar la Aplicación Web
 

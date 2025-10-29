@@ -7,12 +7,18 @@
 git clone https://github.com/MAKEOUTHILL629/Simulador-Tecnicas-Codificacion.git
 cd Simulador-Tecnicas-Codificacion
 
-# Instalar dependencias
+# Instalar dependencias core (siempre funciona)
 pip install -r requirements.txt
+
+# Opcional: Instalar interfaz web (puede requerir build tools en Windows)
+# Ver INSTALL.md si tienes problemas en Windows
+pip install streamlit
 
 # Ejecutar ejemplos
 python main.py
 ```
+
+**Nota para Windows:** Si tienes errores con `streamlit`, consulta `INSTALL.md` para soluciones.
 
 ## Uso Básico
 
