@@ -1,270 +1,259 @@
-# Especificación Técnica para el Desarrollo de un Simulador de Cadena de Comunicación Digital
+# Arquitectura Funcional para un Simulador de Sistemas de Comunicación Multi-Generacional (5G/6G) con Análisis Integrado de Codificación Conjunta Fuente-Canal
 
-## Preámbulo: Visión General del Proyecto y Filosofía Arquitectónica
+## Sección 1: Marco Arquitectónico del Simulador de Red
 
-Este documento constituye una especificación técnica exhaustiva para el desarrollo de un Simulador de Cadena de Comunicación Digital interactivo y basado en la web. El objetivo principal es crear una herramienta educativa que modele el proceso de extremo a extremo de la transmisión de diversas formas de información (texto, imagen, audio, video) a través de un canal ruidoso, implementando técnicas de codificación y modulación pertinentes a los sistemas 5G, 5G Avanzado y conceptualmente 6G. El simulador debe adherirse estrictamente al flujo de trabajo modular y secuencial especificado en los requisitos académicos del usuario, que representa una arquitectura clásica de Codificación Separada de Fuente y Canal (SSCC, por sus siglas en inglés).
+Esta sección establece la estructura fundamental del simulador, definiendo el flujo de procesamiento central, la lógica para la configuración impulsada por el usuario y las rutas adaptativas para manejar diversos tipos de datos. Traduce los requisitos de alto nivel en un modelo arquitectónico concreto.
 
-Un análisis de los materiales de investigación proporcionados revela una dicotomía fundamental: el flujo de trabajo requerido sigue un modelo SSCC tradicional, mientras que la investigación de vanguardia, especialmente en el contexto de 6G, aboga firmemente por la Codificación Conjunta de Fuente y Canal (JSCC) y su variante basada en aprendizaje profundo, DeepJSCC, como un paradigma de mayor rendimiento. La literatura académica subraya que, aunque el Teorema de Separación de Shannon establece la optimalidad asintótica de SSCC, la JSCC ofrece un rendimiento superior en escenarios prácticos de longitud de bloque finita, y evita el "efecto acantilado" (cliff effect) característico de los sistemas digitales. El enfoque de este proyecto es, por lo tanto, reconciliar estas dos perspectivas. El simulador se construirá sobre la base del modelo SSCC para cumplir con los requisitos estructurales del curso, pero incorporará una representación conceptual de los principios de codificación de 6G. Esto se logrará mediante la abstracción del componente de compresión de un sistema DeepJSCC e implementándolo como un bloque discreto de "Codificación de Fuente". Esta estrategia demuestra una comprensión matizada del panorama teórico, al tiempo que se adhiere a las restricciones prácticas de la asignación académica.
+### 1.1. El Flujo de Simulación de Extremo a Extremo: Desde la Fuente hasta la Reconstrucción
 
-## 1. Arquitectura General y Diseño de la Interfaz de Usuario (UI)
+El simulador se estructura en torno a un flujo modular y secuencial que refleja el proceso de comunicación física. Esta arquitectura de tubería (pipeline) se define como una serie de bloques funcionales interconectados, cada uno de los cuales representa una etapa discreta en la cadena de transmisión y recepción. Cada etapa está diseñada para ser un punto de captura de datos, permitiendo la visualización y el análisis en cada paso del proceso.
 
-### 1.1. Objetivo y Alcance del Proyecto
+La secuencia de procesamiento es la siguiente:
 
-El propósito del simulador es proporcionar un entorno configurable y práctico para visualizar y analizar el rendimiento de un sistema de comunicación digital. El sistema se implementará íntegramente en código del lado del cliente (HTML, CSS, JavaScript) para garantizar la portabilidad y la facilidad de uso sin dependencias del lado del servidor.
+1.  **Generación de Fuente**: El proceso comienza con la selección del tipo de datos (Texto, Audio, Imagen, Video) y el contenido específico que se va a transmitir.
+2.  **Codificación de Fuente**: Se aplican algoritmos de compresión a la fuente de datos para reducir su redundancia intrínseca.
+3.  **Codificación de Canal y Modulación**: Se introduce redundancia controlada en el flujo de bits comprimido para protegerlo contra errores, y luego se mapea a símbolos complejos adecuados para la transmisión.
+4.  **Simulación de Canal**: Los símbolos modulados se transmiten a través de un modelo de canal que introduce degradaciones, como ruido (AWGN) y efectos de desvanecimiento.
+5.  **Demodulación y Decodificación de Canal**: En el receptor, los símbolos corruptos se convierten de nuevo en un flujo de bits, idealmente utilizando decisiones blandas (soft decisions) para preservar la información probabilistica. Posteriormente, se utiliza la redundancia del código de canal para corregir errores.
+6.  **Decodificación de Fuente**: El flujo de bits corregido se utiliza para reconstruir el tipo de datos original.
+7.  **Análisis de Rendimiento**: Se calculan métricas cuantitativas y cualitativas en varias etapas del flujo para evaluar el rendimiento general del sistema.
 
-### 1.2. Especificación de Diseño de UI/UX
+### 1.2. Lógica de Configuración Impulsada por la Tecnología y Restricciones entre Parámetros
 
-Se especifica un diseño de tres columnas para la interfaz principal, con el fin de organizar de manera lógica los controles, las visualizaciones y los resultados.
+Un requisito funcional crítico es que el simulador limite las opciones de configuración de acuerdo con la tecnología seleccionada. La interfaz de usuario (UI) del simulador debe estar gobernada por un motor de reglas que imponga combinaciones tecnológicas válidas, evitando configuraciones incompatibles o sin sentido. La selección de una tecnología primaria (5G, 5G Avanzado, 6G) actuará como un filtro maestro. Esta elección habilitará o deshabilitará dinámicamente las opciones en los menús de configuración posteriores. Por ejemplo, la selección de "5G" habilitará los códigos de canal LDPC y Polar ¹y esquemas de modulación hasta 256-QAM.3 La selección de "6G" no solo habilitará estas opciones, sino que también introducirá alternativas especulativas de próxima generación, como QAM de orden superior o esquemas de codificación novedosos basados en los principios de codificación conjunta fuente-canal (JSCC).5
 
-#### 1.2.1. Disposición Principal
+Este enfoque no es meramente una característica de la interfaz, sino un modelo funcional de los propios estándares 3GPP. Transforma el simulador de un simple procesador de señales en una herramienta que puede utilizarse tanto para validar la comprensión de los estándares actuales como para explorar el espacio de parámetros potenciales para estándares futuros. La arquitectura puede, por tanto, cargar diferentes conjuntos de reglas, como un conjunto "5G NR Rel-17" para el cumplimiento de estándares o un conjunto "6G Exploratorio" para la investigación, elevando el propósito del simulador a una plataforma de investigación estructurada.
 
-* **Columna Izquierda (Panel de Control):** Contendrá todos los parámetros configurables por el usuario. Este panel será estático y estará siempre visible para permitir ajustes rápidos y la re-ejecución de la simulación. Los parámetros se agruparán en secciones lógicas, como se detalla en la Tabla 1.
-* **Columna Central (Tubería de Visualización):** Una serie de paneles apilados verticalmente, cada uno correspondiendo a una etapa de la cadena de comunicación: Entrada, Datos Codificados de Fuente, Datos Codificados de Canal, Señal Modulada, Salida del Canal, Señal Demodulada, Datos Decodificados, Salida Final. Cada panel tendrá un encabezado claro y un área de contenido para mostrar gráficos o datos.
-* **Columna Derecha (Análisis y Resultados):** Mostrará la salida final reconstruida para una comparación visual directa con la entrada, métricas de rendimiento cuantitativas (BER, SER, PSNR, SSIM, etc.), y los cálculos teóricos de la información.
+### 1.3. Rutas de Procesamiento Diferenciadas para Fuentes de Datos Heterogéneas
 
-#### 1.2.2. Interactividad
+La arquitectura del simulador debe admitir cadenas de procesamiento distintas y paralelas, adaptadas a las propiedades estadísticas de cada tipo de datos, ya que un algoritmo optimizado para video no es necesariamente adecuado para texto. La selección de un tipo de fuente activará una ruta de algoritmos predeterminada, que puede ser modificada por el usuario dentro de los límites permitidos por la tecnología seleccionada.
 
-Todos los cambios de parámetros en el Panel de Control activarán una re-simulación y actualizarán todos los paneles de visualización y resultados en tiempo real. Un botón "Ejecutar Simulación" iniciará el proceso. La interfaz de usuario debe permanecer receptiva durante el cálculo; para ello, se utilizarán funciones asíncronas (async/await) para los pasos de procesamiento intensivo (por ejemplo, codificación de canal, decodificación) con el fin de evitar el bloqueo del navegador.
+* **Video**: La ruta predeterminada utilizará codificación de fuente HEVC/VVC, codificación de canal LDPC y métricas de calidad como PSNR/SSIM.
+* **Audio**: La ruta predeterminada empleará codificación de fuente EVS/IVAS, codificación de canal Polar/LDPC y métricas de calidad como PESQ/STOI.
+* **Texto**: La ruta predeterminada utilizará codificación de entropía (por ejemplo, Huffman, Aritmética), codificación de canal Polar y métricas como la Tasa de Error de Bit (BER) y la Tasa de Error de Símbolo (SER).
 
-### 1.3. Tecnologías y Librerías Centrales
+Este diseño implementa directamente el concepto de explotación de la redundancia específica de la fuente, una piedra angular tanto de la codificación separada fuente-canal (SSCC) eficiente como de los paradigmas de JSCC.5 Además, la arquitectura del simulador puede modelar la dicotomía teórica entre SSCC y JSCC como dos "modos" de operación distintos. En el "Modo SSCC", el decodificador de fuente es independiente del decodificador de canal. En el "Modo JSCC", los bloques de demodulación, decodificación de canal y decodificación de fuente se reemplazan por un único bloque integrado de "Decodificador Conjunto" que recibe información blanda del canal y produce directamente símbolos de fuente reconstruidos. Esta elección arquitectónica hace que la comparación teórica sea explícita y comprobable dentro del simulador.
 
-* **Lógica:** Se utilizará JavaScript puro (ES6+). No se emplearán frameworks como React o Vue, para centrar el desarrollo en la implementación de los algoritmos fundamentales.
-* **Estructura:** HTML5 para la estructura semántica del documento.
-* **Estilo:** CSS3 para la presentación, con una estética limpia y profesional adecuada para una aplicación técnica.
-* **Visualización:** Se exige el uso de Plotly.js para toda la representación gráfica debido a su amplio conjunto de características para el trazado científico, incluyendo diagramas de constelación, gráficos de líneas, histogramas y mapas de calor (para espectrogramas).
+**Tabla 1: Mapeo de Parámetros Específicos de la Tecnología**
 
-### 1.4. Parámetros de Configuración del Simulador
+| Tipo de Parámetro | 5G | 5G Avanzado | 6G (Exploratorio) |
+| :--- | :--- | :--- | :--- |
+| **Códec de Fuente (Video)** | H.265 (HEVC) | H.266 (VVC) | H.266 (VVC), Codecs Semánticos/Basados en IA |
+| **Códec de Fuente (Audio)** | EVS | IVAS | IVAS, Códecs Basados en Tareas |
+| **Códec de Canal (Datos)** | LDPC | LDPC | LDPC, Códigos Novedosos |
+| **Códec de Canal (Control)** | Polar | Polar | Polar, Códigos Optimizados para Latencia |
+| **Modulación** | QPSK, 16-QAM, 64-QAM, 256-QAM | QPSK, 16-QAM, 64-QAM, 256-QAM | Hasta 1024-QAM, Modulación Adaptativa al Contenido |
 
-La siguiente tabla resume los parámetros configurables por el usuario que deben estar disponibles en el Panel de Control. Esta tabla sirve como una lista de verificación de alto nivel para los elementos de la interfaz de usuario y las variables de simulación requeridas.
+## Sección 2: Modelado de la Información de Fuente y Técnicas de Codificación
 
-**Tabla 1: Parámetros de Configuración del Simulador**
+Esta sección proporciona una definición granular de cada fuente de información y los algoritmos específicos de codificación de fuente (compresión) que se implementarán. Diferenciará entre los estándares establecidos para 5G/5G-A y los paradigmas más vanguardistas, impulsados por la IA, relevantes para 6G.
 
-| Categoría de Parámetro | Nombre del Parámetro | Opciones Seleccionables |
-| :--- | :--- | :--- |
-| Fuente | Tipo de Fuente | Texto, Imagen, Audio, Video (Simplificado) |
-| Codificación de Fuente | Algoritmo | Ninguno, Huffman, Basado en DCT (para Imagen/Video), Basado en MDCT (para Audio), Codificador Aprendido (6G) |
-| Codificación de Canal | Algoritmo | Ninguno, LDPC, Polar |
-| | Tasa de Código | $1/2$, $2/3$, $3/4$ |
-| Modulación | Esquema | QPSK, 16-QAM, 64-QAM, 256-QAM |
-| Canal | Parámetro | SNR (dB), $Eb/N_{0}$ (dB) |
-| | Valor | Entrada numérica definida por el usuario |
+### 2.1. Caracterización de las Fuentes de Información
 
-## 2. Generación y Preprocesamiento de Datos de Fuente
+Para garantizar experimentos realistas y repetibles, el simulador incluirá conjuntos de datos representativos para cada tipo de fuente:
 
-Esta sección detalla cómo el simulador manejará los cuatro tipos de datos de fuente requeridos, desde la entrada del usuario hasta la representación binaria unificada que alimenta la cadena de codificación.
+* **Texto**: Cuerpos de texto estándar (archivos ASCII/UTF-8) con diferentes niveles de redundancia.
+* **Audio**: Señales de voz (por ejemplo, del conjunto de datos TIMIT) y clips de música, muestreados a velocidades estándar (por ejemplo, 16 kHz para voz de banda ancha, 48 kHz para música).
+* **Imagen**: Imágenes de prueba estándar (por ejemplo, Lena, Baboon) y conjuntos de datos modernos (por ejemplo, el conjunto de imágenes Kodak), almacenados en formatos sin pérdida como PNG o BMP.
+* **Video**: Secuencias de video de prueba estándar (por ejemplo, Foreman, Flower Garden) en varias resoluciones (HD, 4K) y velocidades de fotogramas.
 
-### 2.1. Fuente de Texto
+### 2.2. Estándares de Codificación de Fuente para 5G y 5G Avanzado
 
-Se implementará un elemento `<textarea>` de HTML para permitir a los usuarios introducir texto personalizado. Un botón "Cargar Texto de Muestra" poblará el área de texto con un párrafo predeterminado para facilitar las pruebas. La lógica de JavaScript convertirá la cadena de entrada en un flujo binario utilizando la API `TextEncoder` para la codificación UTF-8. Este flujo binario, una secuencia de ceros y unos, constituirá la entrada $X$ para la etapa de codificación de fuente.
+Esta subsección detalla los códecs estandarizados específicos que forman la linea base para las comunicaciones de la era 5G.
 
-### 2.2. Fuente de Imagen
+#### 2.2.1. Codificación de Voz y Audio
 
-Se utilizará un elemento `<input type="file" accept="image/png, image/jpeg">` para la carga de archivos de imagen. Se incluirán imágenes de muestra predeterminadas (por ejemplo, Lena, Baboon) que podrán ser seleccionadas por el usuario. Al cargar una imagen, esta se dibujará en un elemento `<canvas>` de HTML. Se utilizará el método `CanvasRenderingContext2D.getImageData()` para extraer los datos brutos de los píxeles como un `Uint8ClampedArray`. Este array, que representa los valores RGBA, se procesará para convertirlo en un array tridimensional de la forma [alto][ancho] para los componentes RGB, que servirá como la entrada $X$.
+* **El simulador implementará el códec Enhanced Voice Services (EVS)**, el estándar para VoLTE y Vo5G, conocido por su alta calidad y flexibilidad.
+* **Para 5G Avanzado y más allá, incluirá el códec Immersive Voice and Audio Services (IVAS)**, diseñado para experiencias de audio espaciales e inmersivas, que es un componente clave para futuras aplicaciones de realidad virtual y aumentada."
 
-### 2.3. Fuente de Audio
+#### 2.2.2. Codificación de Imagen y Video
 
-Se proporcionará un elemento `<input type="file" accept="audio/wav">` para la carga de archivos de audio. Se incluirá un archivo de audio de muestra predeterminado (por ejemplo, un clip de voz corto). Se utilizará la Web Audio API (específicamente, `AudioContext` y `decodeAudioData`) para decodificar el archivo WAV en un `AudioBuffer`. Los datos de muestra PCM brutos (un `Float32Array`) se extraerán del búfer para servir como el array de entrada unidimensional $X$.
+* **High Efficiency Video Coding (HEVC/H.265)** será el códec principal para 5G, ofreciendo ganancias de compresión significativas sobre su predecesor, AVC/H.264. Es la linea base para la transmisión de 4K.
+* **Versatile Video Coding (VVC/H.266)** se incluirá como el códec para 5G Avanzado y las primeras etapas de 6G, proporcionando mejoras de eficiencia adicionales necesarias para video 8K y aplicaciones inmersivas.
 
-### 2.4. Fuente de Video (Modelo Simplificado)
+La elección de un códec no se trata solo de cuál es "mejor", sino de equilibrar la eficiencia de compresión (tasa de bits) con la complejidad computacional y las restricciones de licencia. 14 Por lo tanto, el simulador asociará un "factor de complejidad" o un parámetro de "retraso de procesamiento" a cada opción de códec. Esto permite comparaciones más matizadas, donde un códec ligeramente menos eficiente podría ser preferible en un escenario de baja latencia (URLLC), proporcionando un espacio de análisis multidimensional más rico.
 
-La implementación de un códec de video completo excede el alcance de este proyecto. El objetivo pedagógico es demostrar el principio de explotación de la redundancia temporal. Para ello, el modelo de video procesará una secuencia corta de fotogramas (por ejemplo, 10 fotogramas). El primer fotograma se tratará como un I-frame (codificado intra-fotograma), y los fotogramas subsiguientes como P-frames (codificados predictivamente). Se proporcionarán dos opciones de implementación:
+### 2.3. Paradigmas Exploratorios de Codificación de Fuente para 6G: Compresión Semántica y Orientada a Objetivos
 
-1.  **Video Sintético:** Generar una animación simple en un `<canvas>`, como un pequeño cuadrado moviéndose sobre un fondo estático. El simulador capturará 10 fotogramas consecutivos de esta animación.
-2.  **Carga de Clip Corto (Opcional):** Permitir la carga de un archivo de video muy corto y utilizar una librería auxiliar de JavaScript para extraer los primeros 10 fotogramas.
+Esta subsección va más allá de la compresión tradicional para modelar el futuro de 6G. La comunicación semántica y orientada a tareas es un motor clave para 6G, donde el objetivo no es la reconstrucción perfecta de la señal, sino transmitir el significado o la información relevante para una tarea. Esto representa un cambio de paradigma fundamental: los códecs 5G (HEVC, EVS) están diseñados para engañar la percepción humana eliminando información que no podemos ver o escuchar, mientras que los códecs 6G están diseñados para preservar el significado semántico para tareas de máquina a máquina.
 
-La secuencia de fotogramas, representada como un array 4D de la forma [fotograma][alto][ancho], constituirá la entrada $X$.
+El simulador modelará esto incluyendo un bloque de "Codificador Semántico Basado en IA". En lugar de un códec estándar, este bloque simulará el comportamiento de un codificador basado en redes neuronales (parte de una arquitectura DeepJSCC) que mapea la fuente directamente a una representación latente optimizada para el canal, omitiendo la generación tradicional de un flujo de bits. Para las simulaciones de 6G, esto requiere dos tipos diferentes de "verdad fundamental" (ground truth). Para una tarea centrada en el ser humano, la verdad fundamental es el video original. Para una tarea centrada en la máquina (por ejemplo, detección de objetos), la verdad fundamental podría ser un conjunto de cuadros delimitadores. El "Codificador Semántico" en el simulador será configurable para optimizar diferentes "objetivos", lo que a su vez requerirá diferentes métricas de rendimiento en la Sección 5 (por ejemplo, precisión de la detección de objetos frente a PSNR).
 
-## 3. Algoritmos de Codificación de Fuente
+### 2.4. Visualización de la Señal Post-Codificación de Fuente
 
-Esta sección define los algoritmos de compresión, abarcando desde técnicas fundamentales hasta conceptos avanzados que representan los principios de los sistemas de comunicación de próxima generación.
+El simulador debe generar una representación visual de los datos después de la codificación de fuente:
 
-### 3.1. Codificador de Entropía de Base: Codificación Huffman
+* **Para todos los tipos de datos**, se mostrará un gráfico binario del flujo de bits resultante.
+* **Para imágenes/videos**, el simulador también mostrará la imagen/cuadro comprimido y reconstruido (antes de la transmisión por el canal) para visualizar los artefactos de compresión.
+* **Para el audio**, se mostrarán la forma de onda y el espectrograma de la señal comprimida.
 
-Se implementará un algoritmo clásico de codificación Huffman. La función tomará un flujo de datos, calculará las frecuencias de los símbolos (por ejemplo, a nivel de byte), construirá el árbol de Huffman, generará la tabla de códigos de prefijo y codificará el flujo. La tabla de códigos debe ser antepuesta a los datos codificados para que el decodificador pueda reconstruir el árbol. Este algoritmo sirve como un ejemplo fundamental de Código de Longitud Variable (VLC), una técnica cuya decodificación en canales ruidosos se discute ampliamente en la literatura.¹
+## Sección 3: Codificación de Canal, Modulación y Transmisión sobre Canales con Degradación
 
-### 3.2. Códecs 5G/5G Avanzado (Abstracción Basada en Principios)
+Esta sección define el proceso de preparación del flujo de bits comprimido para la transmisión inalámbrica. Cubre los esquemas estandarizados de codificación de canal y modulación para 5G y discute cómo se modela el propio canal físico.
 
-Los estándares 3GPP para medios en 5G especifican codecs complejos como HEVC (High Efficiency Video Coding), VVC (Versatile Video Coding), EVS (Enhanced Voice Services) e IVAS (Immersive Voice and Audio Services).² Una implementación directa es inviable. Por lo tanto, el simulador modelará su principio fundamental compartido: la **Codificación por Transformada**. Este enfoque transforma la señal del dominio temporal/espacial al dominio de la frecuencia, donde la energía tiende a concentrarse en unos pocos coeficientes, lo que permite una compresión eficiente.
+### 3.1. Esquemas de Codificación de Canal en Sistemas Inalámbricos Modernos
 
-#### 3.2.1. Implementación para Imagen/Video (Emulando HEVC/VVC)
+La codificación de canal agrega redundancia estructurada al flujo de bits para protegerlo de errores durante la transmisión. 16 5G NR reemplazó los antiguos códigos convolucionales y turbo con esquemas más avanzados, una decisión de ingeniería altamente optimizada basada en los diferentes requisitos (tamaño de bloque, latencia, complejidad) de la información de datos frente a la de control.
 
-* **Transformada:** Se aplicará una Transformada de Coseno Discreta (DCT) 2D a bloques de $8 \times 8$ del componente de luminancia de la imagen (y opcionalmente a la crominancia).
-* **Cuantificación:** Los coeficientes de la DCT se dividirán por una matriz de cuantificación, controlada por un "Factor de Calidad" ajustable por el usuario (1-100). Una mayor calidad implica pasos de cuantificación más pequeños (menos división).
-* **Codificación de Entropía:** Los coeficientes cuantificados se escanearán en un patrón de zigzag para agrupar los coeficientes de baja frecuencia (generalmente más grandes) primero. El flujo resultante de coeficientes se codificará utilizando el codificador Huffman implementado en la sección 3.1.
-* **Para Video:** El primer fotograma será un I-frame, codificado como se describió anteriormente. Para los P-frames subsiguientes, se realizará una estimación de movimiento simple basada en bloques (por ejemplo, utilizando la Suma de Diferencias Absolutas) para encontrar vectores de movimiento. Se transmitirán los vectores de movimiento y el residuo (la diferencia entre la predicción compensada por movimiento y el fotograma real) codificado con DCT, cuantificación y Huffman.
+#### 3.1.1. Códigos LDPC para Canales de Datos
 
-#### 3.2.2. Implementación para Audio (Emulando EVS/IVAS)
+El simulador implementará códigos de Verificación de Paridad de Baja Densidad (LDPC) para los canales de datos (DL-SCH/UL-SCH). Estos fueron elegidos en 5G por su excelente rendimiento con bloques de gran tamaño y alto rendimiento, y su estructura de decodificación paralelizable es ideal para escenarios de banda ancha móvil mejorada (eMBB). El simulador permitirá a los usuarios seleccionar diferentes grafos base y tasas de código.
 
-* **Transformada:** Se aplicará la Transformada de Coseno Discreta Modificada (MDCT) en ventanas superpuestas de la señal de audio. La MDCT es fundamental en códecs de audio modernos por su capacidad para manejar el solapamiento de bloques sin introducir artefactos.
-* **Cuantificación y Codificación:** Se aplicará una cuantificación escalar a los coeficientes de la MDCT y el resultado se codificará por entropía con el codificador Huffman.
+#### 3.1.2. Códigos Polares para Canales de Control
 
-### 3.3. Códec 6G (Modelo Conceptual de DeepJSCC)
+El simulador implementará Códigos Polares para los canales de control (BCH, DCI, UCI). Estos códigos alcanzan la capacidad teórica y tienen un rendimiento excepcional para los tamaños de bloque cortos a medianos típicos de la información de control.¹
 
-Este módulo representa conceptualmente el componente de compresión de un sistema DeepJSCC, adaptado para encajar en la arquitectura SSCC. La idea es simular un codificador que ha "aprendido" a representar la fuente de manera eficiente.
+### 3.2. Esquemas de Modulación Digital
 
-* **Implementación ("Codificador Aprendido"):**
-    * Se proporcionará la estructura y los pesos predefinidos de un autoencoder convolucional simple en JavaScript. Este modelo no se entrenará en el simulador, sino que se definirá estáticamente.
-    * **Codificador:** Una pequeña Red Neuronal Convolucional (CNN) que toma un parche de imagen (por ejemplo, $32 \times 32$) como entrada y produce un vector latente de baja dimensión (por ejemplo, 16 valores de punto flotante).
-    * **"Cuello de Botella Digital":** Este vector latente se cuantifica (por ejemplo, 8 bits por valor) y se serializa en un flujo binario. Este paso es crucial, ya que convierte la representación analógica del espacio latente en un formato digital que puede ser procesado por el codificador de canal, cumpliendo así con el paradigma SSCC.
-    * **Decodificador:** La parte correspondiente del decodificador del autoencoder se utilizará en la etapa de Decodificación de Fuente (Sección 5.4) para reconstruir el parche de la imagen a partir del vector latente recibido.
+Los bits codificados por el canal se mapearán a símbolos complejos utilizando esquemas de modulación digital estándar. El simulador admitirá QPSK, 16-QAM, 64-QAM y 256-QAM, como se especifica para 5G NR.3 Para la exploración de 6G, el simulador incluirá opciones para modulaciones de orden superior como 1024-QAM³, permitiendo la investigación del rendimiento en condiciones de SNR muy altas. La elección del esquema de modulación estará vinculada a los parámetros de calidad del canal, simulando el proceso de Modulación y Codificación Adaptativa (AMC).
 
-## 4. Codificación de Canal y Esquemas de Modulación
+### 3.3. Modelado del Canal Inalámbrico
 
-Esta sección especifica los esquemas de codificación de canal y modulación estandarizados por el 3GPP para 5G New Radio (NR).
+Este bloque simula el medio de transmisión físico. Toma los símbolos modulados como entrada y produce una versión corrupta. El modelo de canal no es solo un bloque pasivo; es el motor principal para demostrar el valor de JSCC.
 
-### 4.1. Codificación de Canal (Estándares 5G NR)
+* **Modelo de Ruido**: La degradación principal será el Ruido Gaussiano Blanco Aditivo (AWGN). El nivel de ruido será configurable por el usuario a través de dos parámetros clave: Relación Señal a Ruido (SNR) y $E_{b}/N_{0}$ (Energía por bit a la densidad espectral de potencia de ruido).
+* **Modelo de Desvanecimiento**: Para simular condiciones inalámbricas realistas, el simulador debe incluir modelos de desvanecimiento estándar (por ejemplo, Rayleigh, Rician). Esto es crucial, ya que los sistemas SSCC sufren de un "efecto acantilado" en canales que varían en el tiempo, mientras que JSCC proporciona una "degradación gradual". El simulador debe permitir a los usuarios cambiar fácilmente entre un canal AWGN estático (donde un SSCC bien diseñado funciona casi de manera óptima) y un canal de desvanecimiento dinámico (donde los beneficios de JSCC se vuelven inmediatamente evidentes en los gráficos comparativos).
 
-La estandarización de 5G NR adoptó los códigos LDPC para los canales de datos (eMBB) y los códigos Polares para los canales de control, debido a su rendimiento cercano a la capacidad de Shannon en sus respectivos regímenes de operación. El simulador implementará ambos.
+### 3.4. Visualización de la Señal: Formas de Onda Moduladas y Corruptas por el Canal
 
-#### 4.1.1. Códigos LDPC (Low-Density Parity-Check)
+* **Diagrama de Constelación**: El simulador mostrará el diagrama de constelación de los símbolos modulados antes y después de pasar por el canal. Esto proporciona una visualización intuitiva del impacto del ruido y el desvanecimiento.
+* **Forma de Onda en el Dominio del Tiempo**: Se trazarán los componentes I/Q de la señal en función del tiempo, mostrando las formas de onda transmitidas y recibidas.
 
-* **Codificador:** Se implementará un codificador LDPC Quasi-Cíclico (QC-LDPC). Se proporcionará un pequeño grafo base (protograph) predefinido y un factor de expansión (lifting factor) $Z$ para construir la matriz de verificación de paridad completa $H$. La estructura QC-LDPC es estándar en 5G por permitir una implementación paralela y de alto rendimiento. La codificación será sistemática, donde los bits de paridad se calculan y se añaden a los bits de información.
-* **Decodificador:** Se implementará el decodificador de Propagación de Creencias (Belief Propagation), específicamente el Algoritmo Suma-Producto. Este operará sobre Log-Likelihood Ratios (LLRs) provenientes del demodulador. Se establecerá un número máximo de iteraciones (por ejemplo, 50) para garantizar la terminación del algoritmo.
+## Sección 4: Recepción de la Señal, Demodulación y Decodificación Avanzada
 
-#### 4.1.2. Códigos Polares
+Esta sección detalla las operaciones del lado del receptor, centrándose en el paso crítico de la decodificación. Se basará directamente en la investigación proporcionada para definir un módulo de decodificación sofisticado capaz de realizar tanto la decodificación separada tradicional como la decodificación conjunta fuente-canal avanzada.
 
-* **Codificador:** Se implementará un codificador Polar. La construcción se basará en un método independiente del SNR donde las fiabilidades de los subcanales se precalculan (como se menciona en [9]). Se especificará la construcción de la matriz generadora. Se antepondrá un CRC (Cyclic Redundancy Check) a los bits del mensaje, creando un código Polar Asistido por CRC (CA-Polar), una práctica estándar en 5G para mejorar el rendimiento de la decodificación por lista.
-* **Decodificador:** Se implementará un decodificador de Cancelación Sucesiva por Lista (SCL). Se utilizará un tamaño de lista $L$ pequeño (por ejemplo, 4 u 8) para equilibrar el rendimiento y la complejidad computacional. El decodificador utilizará el CRC para seleccionar la ruta más probable de la lista, descartando las rutas que no satisfacen la verificación del CRC.
+### 4.1. Demodulación y Generación de Información de Decisión Blanda
 
-### 4.2. Esquemas de Modulación
+El primer paso en el receptor es convertir la forma de onda ruidosa recibida de nuevo en un flujo de bits. De manera crucial, en lugar de tomar una decisión "dura" (0 1), el demodulador calculará Log-Likelihood Ratios (LLRs) para cada bit. Estos LLRs representan la "información blanda", una medida de confianza sobre si un bit es un O o un 1. Esta información es la moneda de cambio de los sistemas de decodificación modernos y es esencial para el alto rendimiento de los decodificadores iterativos y los enfoques JSCC.5 La conexión entre el demodulador y el decodificador no es solo un cable que transporta bits; es un bus que transporta distribuciones de probabilidad.
 
-5G NR utiliza una variedad de esquemas de modulación para adaptarse a las condiciones del canal, permitiendo un equilibrio entre la velocidad de datos y la robustez."
+### 4.2. El Paradigma de la Decodificación Conjunta Fuente-Canal (JSCD)
 
-* **Implementación:**
-    * Se creará una función de mapeo que tome un bloque de $k$ bits y lo asigne a uno de los $M=2^{k}$ símbolos complejos de la constelación.
-    * Se implementarán mapeadores para QPSK ($k=2$), 16-QAM ($k=4$), 64-QAM ($k=6$) y 256-QAM ($k=8$).¹³
-    * Los símbolos de salida deben ser normalizados para tener una potencia media unitaria, asegurando que la potencia de la señal transmitida sea consistente independientemente del esquema de modulación.
+Esta subsección es el núcleo teórico de las capacidades avanzadas del simulador, basada directamente en la investigación proporcionada. El simulador implementará un bloque JSCD que explota tanto la redundancia inducida por el canal como la redundancia residual de la fuente.
 
-## 5. Canal, Demodulación y Decodificación
+#### 4.2.1. Explotación de la Redundancia Residual con Modelos Ocultos de Markov (HMMs)
 
-### 5.1. Modelo de Canal
+Como se describe en la literatura 5, la suboptimidad de los codificadores de fuente deja una correlación residual (redundancia) en el flujo de bits. El simulador modelará el flujo codificado por la fuente como una función de un HMM. Este modelo estadístico es la clave para permitir la decodificación conjunta. El problema se convierte en uno de estimación de los estados ocultos (los símbolos originales de la fuente) a partir de las observaciones ruidosas (los LLRS recibidos). Para los códigos de longitud variable (VLC), esto aborda el "problema conjunto de segmentación y estimación", que es una de las principales dificultades de la decodificación de VLC en canales ruidosos.5
 
-Se implementará un canal de Ruido Blanco Gaussiano Aditivo (AWGN). La función tomará los símbolos complejos modulados y añadirá ruido complejo $n = n_I + j \cdot n_Q$, donde $n_I$ y $n_Q$ son variables aleatorias gaussianas reales, independientes, con media cero y varianza $\sigma^2$. La varianza del ruido $\sigma^2$ se calculará a partir del parámetro especificado por el usuario (SNR o Eb/No) utilizando las siguientes relaciones:
+#### 4.2.2. Decodificación Iterativa mediante el Principio Turbo
 
-* Para una señal de potencia unitaria, la relación señal/ruido (SNR) se define como $SNR = \frac{1}{2\sigma^2}$.
-* La relación energía por bit a densidad espectral de potencia de ruido ($E_b/N_0$) se relaciona con el SNR mediante la expresión:
-    $$\frac{E_b}{N_0} = \frac{SNR}{k \cdot R_c}$$
-    donde $k$ es el número de bits por símbolo (dependiente de la modulación) y $R_c$ es la tasa del código de canal.
+El bloque JSCD se implementará como un decodificador iterativo, intercambiando información extrínseca entre un componente de decodificador de canal y un componente de decodificador de fuente. Esto evita la "explosión de estados" de un modelo completamente unificado. El simulador admitirá algoritmos clave para este proceso:
 
-### 5.2. Demodulación
+* **Algoritmo BCJR**: Un algoritmo óptimo de decodificación MAP símbolo por símbolo.
+* **Algoritmo Viterbi de Salida Blanda (SOVA)**: Una aproximación menos compleja al BCJR.
 
-Los decodificadores de canal modernos, como los de LDPC y Polares, requieren información "suave" (soft information) en lugar de decisiones binarias "duras" para lograr un rendimiento óptimo.
+### 4.3. Flujos de Decodificación Específicos de la Tecnología
 
-* **Implementación:**
-    * **Demodulador de Decisión Dura:** Para fines de comparación, se implementará un detector de distancia euclidiana mínima que mapea cada símbolo ruidoso recibido al punto más cercano de la constelación y emite la secuencia de bits correspondiente.
-    * **Demodulador de Decisión Suave:** Este será el demodulador principal. Se implementará una función para calcular el Log-Likelihood Ratio (LLR) para cada bit. Para un canal AWGN, el LLR de un bit $b_i$ se puede aproximar con la fórmula max-log para simplificar el cálculo:
-        $$LLR(b_i) \approx \frac{1}{2\sigma^2} \left(\min_{s \in S_O} |y-s|^2 - \min_{s \in S_1} |y-s|^2 \right)$$
-        donde $y$ es el símbolo recibido, y $S_0$ y $S_1$ son los conjuntos de símbolos de la constelación donde el bit $b_i$ es 0 y 1, respectivamente.
+El simulador contará con distintos flujos de decodificación basados en la configuración del usuario:
 
-### 5.3. Decodificación de Canal
+* **Flujo SSCC (Linea Base 5G)**: Un flujo estándar que consiste en un decodificador LDPC o Polar seguido de un decodificador de fuente separado (por ejemplo, HEVC, EVS). El decodificador de canal emite decisiones duras que se alimentan al decodificador de fuente. Este flujo es propenso al "efecto acantilado", donde un solo error de bit en un flujo VLC puede desincronizar el resto del flujo, lo que lleva a un fallo catastrófico.
+* **Flujo JSCD Clásico (Exploración 5G-A/6G)**: Una estructura iterativa tipo turbo como se describe en 4.2. Este flujo es particularmente relevante para los VLC, donde puede recuperarse de errores de sincronización al encontrar la ruta más probable (secuencia de símbolos) a través del trellis del HMM, incluso si eso significa reevaluar los límites de los símbolos.
+* **Modelo de Rendimiento DeepJSCC (Exploración 6G)**: Esto no será una implementación completa de una red neuronal, sino un modelo funcional basado en las características descritas en la investigación. Tomará las salidas del canal y producirá directamente una fuente reconstruida, con su rendimiento (por ejemplo, PSNR) variando suavemente en función del SNR del canal, modelando así la "degradación gradual" sin la sobrecarga de entrenar una red real.
 
-Este bloque contendrá los decodificadores LDPC (Propagación de Creencias) y Polar (SCL) especificados en la Sección 4.1. Tomarán los LLRs como entrada y producirán una estimación de decisión dura del flujo de bits transmitido.
+### 4.4. Visualización de la Señal en las Etapas de Demodulación y Decodificación
 
-### 5.4. Decodificación de Fuente
+* El simulador visualizará los valores de LLR después de la demodulación.
+* **Para los decodificadores iterativos**, trazará la evolución de las tasas de error de bit o los valores de información extrínseca a lo largo de las iteraciones, proporcionando una visión del comportamiento de convergencia del decodificador.
 
-Se implementarán las operaciones inversas para cada algoritmo de la Sección 3: decodificación Huffman (utilizando la tabla de códigos recibida), de-cuantificación, transformada inversa (IDCT/IMDCT) y la parte del decodificador del autoencoder aprendido.
+## Sección 5: Evaluación del Rendimiento y Análisis Gráfico Comparativo
 
-## 6. Visualizaciones Requeridas
+Esta sección define las métricas cuantitativas y las salidas gráficas que el simulador debe producir. Aborda directamente la solicitud central del usuario de "mostrar graficas comparativas" y calcular cantidades específicas de la teoría de la información. La "integridad" de la información se operacionalizará en tres niveles: integridad de la capa física (BER), integridad de la reconstrucción (PSNR/SSIM/PESQ) e integridad teórica de la información (información mutua).
 
-Esta sección exige salidas gráficas específicas para cada etapa, con el fin de cumplir con el requisito de visualización del proyecto.
+### 5.1. Métricas Fundamentales de la Teoría de la Información
 
-* **Fuente de Entrada:** Mostrar el texto, la imagen o un gráfico de la forma de onda del audio.
-* **Datos Codificados de Fuente:** Mostrar los primeros N bits del flujo binario y su longitud total.
-* **Señal Modulada (Pre-Canal):** Un diagrama de dispersión de los puntos de la constelación (gráfico I/Q).
-* **Salida del Canal (Post-Canal):** Un diagrama de dispersión de los símbolos ruidosos recibidos, superpuestos a los puntos ideales de la constelación. Esta es una visualización crucial para entender el efecto del ruido.
-* **Salida del Demodulador:** Un histograma de los valores LLR calculados. Esto ayuda a visualizar la confianza de las decisiones suaves.
-* **Salida Final:** Mostrar el texto, la imagen o la forma de onda de audio reconstruidos para una comparación directa con la entrada.
+El simulador calculará estas métricas para proporcionar una comprensión teórica profunda del proceso de comunicación, basándose en la teoría clásica de Shannon. 16
 
-## 7. Métricas de Rendimiento y Cálculos Teórico-Informativos
+#### 5.1.1. Cuantificación del Contenido de Información
 
-Esta sección detalla el análisis cuantitativo requerido por el usuario, abordando la verificación de la integridad y el cálculo de métricas de la teoría de la información.
+* **Cantidad de Información (Autoinformación)**: Para un símbolo de fuente dado $s$ con probabilidad $p(s)$ el simulador calculará $l(s)=-log_{2}(p(s))$ bits. Esto mide la "sorpresa" de observar ese simbolo.21
+* **Información Promedio (Entropía)**: Para todo el alfabeto de la fuente, el simulador calculará la entropia $H(X) = -\sum p(x)\log_{2}(p(x))$ bits/simbolo. Esta es la cota inferior fundamental para la compresión de una fuente sin memoria y mide la incertidumbre promedio de la fuente. 23
 
-### 7.1. Métricas de Integridad y Calidad de la Información
+#### 5.1.2. Medición de la Transferencia de Información
 
-* **Tasa de Error de Bit (BER) y Tasa de Error de Símbolo (SER):**
-    * Se implementarán funciones para comparar los flujos de bits/símbolos transmitidos y recibidos y calcular las tasas de error.¹⁵ La relación $SER \approx \log_2(M) \cdot BER$ para SNR alto con codificación Gray se señalará como un concepto teórico importante.¹⁵
-* **Relación Señal a Ruido de Pico (PSNR) (para Imágenes/Video):**
-    * Se implementará el cálculo del PSNR basado en el Error Cuadrático Medio (MSE), según las definiciones estándar.¹⁸ Se proporcionará la fórmula:
-        $$PSNR = 10 \cdot \log_{10}\left(\frac{MAX_I^2}{MSE}\right)$$
-        donde $MAX_I$ es el valor máximo posible de un píxel (255 para imágenes de 8 bits) y el MSE se define como:
-        $$MSE = \frac{1}{m \cdot n}\sum_{i=0}^{m-1}\sum_{j=0}^{n-1} [I(i, j) - K(i, j)]^2$$
-        siendo $I$ la imagen original y $K$ la imagen reconstruida.²¹
-* **Índice de Similitud Estructural (SSIM) (para Imágenes/Video):**
-    * Se implementará la métrica SSIM. Esta es una métrica perceptual crucial que a menudo se correlaciona mejor con el juicio humano que el PSNR.²² Se proporcionará la fórmula general y sus componentes de luminancia ($l$), contraste ($c$) y estructura ($s$).²⁴
-        $$SSIM(x,y) = \frac{(2\mu_x\mu_y + C_1)(2\sigma_{xy} + C_2)}{(\mu_x^2 + \mu_y^2 + C_1)(\sigma_x^2 + \sigma_y^2 + C_2)}$$
-* **Calidad Perceptual de Audio (Proxy):**
-    * Implementar una métrica completa como PESQ (Perceptual Evaluation of Speech Quality)²⁶ es demasiado complejo. En su lugar, se calculará la **SNR Segmental**. Se calculará la SNR sobre tramas cortas y no superpuestas (por ejemplo, 20 ms) de la señal de audio y se promediarán los resultados en el dominio de dB. Esto refleja mejor la calidad percibida en presencia de ruido no estacionario.
+* **Información Mutua**: El simulador calculará la información mutua $l(X;Y)=H(X)-H(X|Y)$ entre la fuente transmitida $X$ y la salida reconstruida $Y$. Esta métrica mide la cantidad de información sobre la entrada que se transmite con éxito a la salida, proporcionando una medida de la eficiencia del sistema de extremo a extremo. 25
 
-### 7.2. Cálculos Teórico-Informativos
+### 5.2. Métricas de Calidad Objetivas y Perceptuales para la Integridad de la Información
 
-Las fórmulas para la entropía y la información mutua son teóricas. La clave es especificar cómo estimarlas a partir de las muestras de datos finitas disponibles en el simulador.
+Estas métricas responden a la pregunta "¿Qué tan buena es la salida reconstruida?" y abordan el requisito del usuario de "Verificar la claridad e integridad de la información resultante".
 
-* **Entropía $H(X)$ y $H(Y)$:**
-    * La entropía de una fuente discreta $X$ se define como $H(X) = -\sum_{x \in \mathcal{X}} p(x) \log_2 p(x)$.²⁸ Para estimar la distribución de probabilidad $p(x)$ a partir de los datos de la fuente (por ejemplo, los valores de intensidad de los píxeles de una imagen), se construirá un histograma de los valores de los símbolos. La probabilidad de cada símbolo $i$ se estimará como $p(i) = \frac{\text{frecuencia de } i}{\text{número total de símbolos}}$.³⁰ Se implementará una función que tome un array de datos, calcule el histograma para estimar $p(x)$ y luego calcule la entropía en bits/símbolo.
-* **Información Mutua $I(X; Y)$:**
-    * La información mutua entre la entrada $X$ y la salida $Y$ mide la reducción de la incertidumbre sobre $X$ que se obtiene al observar $Y$. Se calcula como $I(X;Y) = H(X) - H(X|Y)$ o, de forma equivalente, $I(X;Y) = H(X) + H(Y) - H(X,Y)$.³¹ La implementación utilizará la fórmula:
-        $$I(X;Y) = \sum_{x \in \mathcal{X}}\sum_{y \in \mathcal{Y}} p(x,y) \log_2\left(\frac{p(x,y)}{p(x)p(y)}\right)$$
-        donde la distribución de probabilidad conjunta $p(x,y)$ se estimará construyendo un histograma 2D de los pares de símbolos de entrada/salida co-ocurrentes y normalizándolo.³⁴
+#### 5.2.1. Evaluación de la Calidad de Imagen y Video
 
-## 8. Parámetros Adicionales para la Integridad de la Información
+* **Relación Señal a Ruido de Pico (PSNR)**: Una métrica clásica, fácil de calcular, basada en el Error Cuadrático Medio (MSE).
+* **Índice de Similitud Estructural (SSIM)**: Una métrica perceptual más avanzada que compara luminancia, contraste y estructura, que a menudo se correlaciona mejor con la percepción de calidad humana.
 
-Esta sección aborda directamente la solicitud de identificar otros parámetros relevantes para medir la integridad de la información.
+#### 5.2.2. Evaluación de la Calidad de Voz y Audio
 
-### 8.1. Magnitud del Vector de Error (EVM)
+* **Evaluación Perceptual de la Calidad del Habla (PESQ)**: Un estándar de la UIT-T para la evaluación objetiva de la calidad de la voz, que produce una puntuación que se correlaciona con las Puntuaciones de Opinión Media (MOS) subjetivas. 29
+* **Inteligibilidad Objetiva a Corto Plazo (STOI)**: Una métrica que mide específicamente la inteligibilidad del habla en condiciones de ruido. 32
 
-* **Definición:** La EVM es una métrica estándar de la industria que mide la calidad de la señal modulada cuantificando la diferencia entre los puntos ideales de la constelación y los puntos recibidos.¹³
-* **Cálculo:** Se calculará como $EVM (\%) = \sqrt{\frac{P_{\text{error}}}{P_{\text{referencia}}}} \times 100$, donde $P_{\text{error}}$ es la potencia media del vector de error (la diferencia entre los símbolos recibidos e ideales) y $P_{\text{referencia}}$ es la potencia media de los símbolos ideales.
-* **Significado:** La EVM proporciona una medida integral de la calidad de todo el transmisor y el canal (incluyendo ruido de fase, desequilibrio de amplitud y no linealidades) antes de que se consideren los efectos de la codificación de canal. Impacta directamente en la calidad de la entrada al demodulador y, por lo tanto, en el rendimiento general del sistema.
+### 5.3. Marco para la Generación de Análisis Comparativos y Visualizaciones
 
-### 8.2. Tasa de Error de Bloque (BLER) / Tasa de Error de Trama (FER)
+Esta es la característica principal del simulador. Los gráficos comparativos sirven como una herramienta de prueba de hipótesis para validar visualmente las afirmaciones centrales hechas en los artículos de investigación. El simulador debe ser capaz de generar los siguientes gráficos:
 
-* **Definición:** Mientras que BER/SER miden errores a nivel de bit/símbolo, BLER/FER miden errores a nivel de paquete o bloque de datos. Un bloque se considera erróneo si uno o más bits dentro de él son incorrectos.¹⁶
-* **Cálculo:** $BLER = \frac{\text{Número de Bloques Erróneos}}{\text{Número Total de Bloques Transmitidos}}$.
-* **Significado:** Esta métrica es a menudo más relevante para sistemas prácticos (como el streaming de video o la transferencia de archivos) donde la unidad de retransmisión es un bloque/paquete, no un solo bit. Proporciona una medida del "rendimiento útil" del sistema, ya que un solo error de bit puede hacer que un paquete entero sea descartado.
+* **BER vs. $E_{b}/N_{0}$**: La curva clásica de rendimiento del canal, que muestra la tasa de error de bit en función de la relación señal a ruido normalizada para diferentes esquemas de codificación de canal y modulación.
+* **PSNR/SSIM/PESQ vs. SNR del Canal**: Este es el gráfico clave para comparar SSCC y JSCC. Se utilizará para demostrar explícitamente el "efecto acantilado" de SSCC (una caída brusca de la calidad por debajo de un cierto SNR) frente a la "degradación gradual" de JSCC/DeepJSCC (una disminución suave y monotónica de la calidad), como se destaca en la investigación.5
+* **Curvas de Tasa-Distorsión**: Gráficos de calidad (por ejemplo, PSNR) frente a la tasa de bits para diferentes códecs de fuente, permitiendo una comparación directa de su eficiencia de compresión.
+* **Información Mutua vs. SNR del Canal**: Un gráfico que muestra cuánta información se transfiere con éxito en función de la calidad del canal.
 
-### 8.3. Distancia de Levenshtein (para Texto)
+**Tabla 2: Métricas de Rendimiento e Integridad Completas**
 
-* **Definición:** Mide la diferencia entre dos secuencias contando el número mínimo de ediciones de un solo carácter (inserciones, eliminaciones o sustituciones) necesarias para cambiar una secuencia en la otra. Se menciona como una medida de rendimiento válida en la literatura.¹
-* **Significado:** Para la transmisión de texto, el BER puede ser engañoso. Un solo error de bit podría causar una sustitución de caracteres semánticamente cercana, mientras que otro podría provocar una cascada de errores que haga que el texto sea ilegible. La distancia de Levenshtein proporciona una medida más práctica de la "legibilidad" del texto recibido, evaluando la integridad estructural a nivel de caracteres.
+| Nombre de la Métrica | Definición/Fórmula | Etapa Medida | Tipo(s) de Datos | Mide (Integridad de...) |
+| :--- | :--- | :--- | :--- | :--- |
+| **Entropía** | $H(X)=-\sum p(x)log_{2}(p(x))$ | Salida de la Fuente | Todos | Incertidumbre de la fuente |
+| **Información Mutua** | $l(X;Y)=H(X)-H(X|Y)$ | Extremo a Extremo | Todos | Transferencia de información |
+| **BER** | (Bits erróneos) / (Total de bits) | Salida del Dec. de Canal | Todos | Capa física |
+| **PSNR** | $10\log_{10}(MAX_1^2/MSE)$ | Extremo a Extremo | Imagen, Video | Reconstrucción (fidelidad) |
+| **SSIM** | Función de $l(x,y)$, $c(x,y)$, $s(x,y)$ | Extremo a Extremo | Imagen, Video | Reconstrucción (perceptual) |
+| **PESQ** | Algoritmo ITU-T P.862 | Extremo a Extremo | Audio (Voz) | Reconstrucción (perceptual) |
 
-## Conclusión
+## Sección 6: Síntesis y Direcciones de Investigación Futuras para la Simulación 6G
 
-La especificación detallada en este documento proporciona un plan completo para la creación de un simulador de comunicación digital robusto y pedagógicamente valioso. Al implementar una arquitectura SSCC modular y al mismo tiempo incorporar representaciones conceptuales de técnicas avanzadas de 6G, la herramienta resultante permitirá a los estudiantes explorar de manera interactiva las compensaciones fundamentales entre la eficiencia de la compresión, la robustez de la codificación, la eficiencia espectral de la modulación y el impacto del ruido del canal. Las visualizaciones en cada etapa y el conjunto completo de métricas de rendimiento, desde las tasas de error de bit hasta los cálculos de información mutua, ofrecerán una visión profunda del comportamiento del sistema, cerrando la brecha entre la teoría abstracta de la información y la ingeniería de comunicaciones práctica.
+Esta sección final resume las capacidades del simulador como una herramienta poderosa para unir la teoría y la práctica. Delinea cómo la arquitectura diseñada puede ser aprovechada para explorar preguntas de investigación abiertas en las comunicaciones 6G, posicionando al simulador no solo como una herramienta de aprendizaje, sino como un motor para la innovación futura.
+
+### 6.1. Síntesis del Rol del Simulador en el Análisis de Sistemas de Comunicación
+
+El simulador está diseñado para modelar y comparar rigurosamente los paradigmas SSCC y JSCC a través de múltiples generaciones tecnológicas (5G/6G) y tipos de datos. Su función principal es servir como una herramienta visual y cuantitativa para demostrar conceptos fundamentales, tales como el contraste entre el efecto acantilado y la degradación gradual, el valor de la información blanda en la decodificación moderna, y los compromisos inherentes entre tasa, distorsión y complejidad. Al hacer estos conceptos teóricos tangibles y observables, el simulador facilita una comprensión más profunda del diseño y las limitaciones de los sistemas de comunicación inalámbrica.
+
+### 6.2. Un Banco de Pruebas para la Investigación y el Desarrollo de 6G
+
+La arquitectura flexible y modular del simulador, particularmente sus bloques exploratorios para "Codificación Semántica" y "DeepJSCC", lo convierte en una plataforma ideal para la investigación en 6G. Dado que DeepJSCC es un campo prometedor pero aún en desarrollo 5, el simulador puede ser utilizado para:
+
+* **Generar puntos de referencia de rendimiento**: Los nuevos modelos reales de DeepJSCC pueden ser comparados con los resultados del modelo funcional del simulador para validar su eficacia.
+* **Investigar el impacto de condiciones de canal complejas**: Se puede estudiar el rendimiento de DeepJSCC bajo modelos de canal avanzados que incluyan desvanecimiento complejo, interferencia y movilidad, yendo más allá de los modelos AWGN simples.
+* **Explorar sistemas híbridos SSCC/JSCC**: La arquitectura permite investigar esquemas donde la información crítica se envía a través de un robusto SSCC digital, mientras que los datos de mejora de calidad se transmiten a través de un JSCC de degradación gradual.
+* **Modelar la comunicación orientada a tareas**: El simulador puede ser extendido para evaluar el éxito de tareas de máquina a máquina, donde la métrica de rendimiento no es el PSNR, sino la tasa de éxito de la tarea (por ejemplo, la precisión de la clasificación de objetos). Esto permite la investigación de sistemas de comunicación verdaderamente semánticos, donde el objetivo final no es la reconstrucción de píxeles, sino la preservación del significado para una aplicación específica.
 
 ## Obras citadas
 
-1.  Articulo 1.pdf
-2.  3GPP 26-series: 3G to 5G CODECs - Tech-invite, fecha de acceso: octubre 29, 2025, <https://www.tech-invite.com/3m26/tinv-3gpp-26.html>
-3.  3GPP specification series: 26series, fecha de acceso: octubre 29, 2R025, <https://www.3gpp.org/dynareport/26-series.htm>
-4.  New Codecs for 5G, fecha de acceso: octubre 29, 2025, <https://dashif.org/docs/workshop-2019/04-thierry%20fautier%20-%20Harmonic%20Codec%20Comparison%205G%20Media%20Workshop%20Final%20v3.pdf>
-5.  An overview of channel coding for 5G NR cellular communications | APSIPA Transactions on Signal and Information Processing - Cambridge University Press & Assessment, fecha de acceso: octubre 29, 2025, <https://www.cambridge.org/core/journals/apsipa-transactions-on-signal-and-information-processing/article/an-overview-of-channel-coding-for-5g-nr-cellular-communications/CF52C26874AF5E00883E00B6E1F907C7>
-6.  The Development, Operation and Performance of the 5G Polar Codes - ePrints Soton - University of Southampton, fecha de acceso: octubre 29, 2025, <https://eprints.soton.ac.uk/436696/1/3GPP%20PAPER%20two%20column%2011.pdf>
-7.  Full article: Overview of the challenges and solutions for 5G channel coding schemes, fecha de acceso: octubre 29, 2025, <https://www.tandfonline.com/doi/full/10.1080/24751839.2021.1954752>
-8.  Demystifying 5G Polar and LDPC Codes: A Comprehensive Review and Foundations, fecha de acceso: octubre 29, 2025, <https://arxiv.org/html/2502.11053v2>
-9.  5G New Radio Polar Coding - MATLAB & Simulink - MathWorks, fecha de acceso: octubre 29, 2025, <https://la.mathworks.com/help/5g/gs/polar-coding.html>
-10. 5G/NR Channel Codes Evolution and Recommendation on Polar Codes - Techplayon, fecha de acceso: octubre 29, 2025, <https://www.techplayon.com/5gnr-channel-codes-evolution-consideration-3gpp-recommendation-polar-codes/>
-11. 5G Waveforms & Modulation: CP-OFDM & DFT-s-OFDM - Electronics Notes, fecha de acceso: octubre 29, 2025, <https://www.electronics-notes.com/articles/connectivity/5g-mobile-wireless-cellular/waveforms-ofdm-modulation.php>
-12. Understanding the 5G NR PHY - Tetcos, fecha de acceso: octubre 29, 2025, <https://www.tetcos.com/pdf/v13/Experiments/5G-NR-PHY.pdf>
-13. TS 138 521-1-V15.1.0-5G; NR; User Equipment (UE) conformance specification - ETSI, fecha de acceso: octubre 29, 2025, <https://www.etsi.org/deliver/etsi_ts/138500_138599/13852101/15.01.00_60/ts_13852101v150100p.pdf>
-14. Overcoming 5G NR mmWave Signal Quality Challenges | Keysight Blogs, fecha de acceso: octubre 29, 2025, <https://www.keysight.com/blogs/en/inds/2019/09/30/overcoming-5g-nr-mmwave-signal-quality-challenges>
-15. Bit Error Rate Vs Symbol Error Rate: Ratio Bits | PDF | Teaching Methods & Materials | Computers - Scribd, fecha de acceso: octubre 29, 2025, <https://www.scribd.com/doc/126542419/BERvsSER>
-16. Bit error rate - Wikipedia, fecha de acceso: octubre 29, 2025, <https://en.wikipedia.org/wiki/Bit_error_rate>
-17. Why is bit error rate = symbol error rate / number of bits per symbol in QPSK, fecha de acceso: octubre 29, 2025, <https://dsp.stackexchange.com/questions/58124/why-is-bit-error-rate-symbol-error-rate-number-of-bits-per-symbol-in-qpsk>
-18. www.mathworks.com, fecha de acceso: octubre 29, 2025, <https://www.mathworks.com/help/images/ref/psnr.html#:~:text=%3D%20psnr(A%2C%20ref)%20calculates,value%20indicates%20better%20image%20quality.&text=peaksnr%20%3D%20psnr(%20A%20%2C%20ref%20%2C%20peakval%20)%20calculates,the%20peak%20signal%20value%20peakval%20.>
-19. Peak signal-to-noise ratio - Wikipedia, fecha de acceso: octubre 29, 2025, <https://en.wikipedia.org/wiki/Peak_signal-to-noise_ratio>
-20. PSNR - Compute peak signal-to-noise ratio (PSNR) between images - Simulink - MathWorks, fecha de acceso: octubre 29, 2025, <https://www.mathworks.com/help/vision/ref/psnr.html>
-21. Peak Signal-to-Noise Ratio (PSNR) - Python - GeeksforGeeks, fecha de acceso: octubre 29, 2025, <https://www.geeksforgeeks.org/python/python-peak-signal-to-noise-ratio-psnr/>
-22. Structural similarity index measure - Wikipedia, fecha de acceso: octubre 29, 2025, <https://en.wikipedia.org/wiki/Structural_similarity_index_measure>
-23. SSIM: Structural Similarity Index - Imatest, fecha de acceso: octubre 29, 2025, <https://www.imatest.com/docs/ssim/>
-24. Structural similarity index family for image quality assessment in radiological images - PMC, fecha de acceso: octubre 29, 2025, <https://pmc.ncbi.nlm.nih.gov/articles/PMC5527267/>
-25. Image Quality Assessment through FSIM, SSIM, MSE and PSNR-A Comparative Study, fecha de acceso: octubre 29, 2025, <https://www.scirp.org/journal/paperinformation?paperid=90911>
-26. Perceptual Evaluation of Speech Quality - Wikipedia, fecha de acceso: octubre 29, 2025, <https://en.wikipedia.org/wiki/Perceptual_Evaluation_of_Speech_Quality>
-27. ITU-T Rec. P.862 (02/2001) Perceptual evaluation of speech quality (PESQ), fecha de acceso: octubre 29, 2025, <http://moodle.eece.cu.edu.eg/pluginfile.php/2121/mod_resource/content/1/P.862.pdf>
-28. www.machinelearningmastery.com, fecha de acceso: octubre 29, 2025, <https://www.machinelearningmastery.com/what-is-information-entropy/#:~:text=Entropy%20can%20be%20calculated%20for,*%20log(p(k)))>
-29. Entropy (information theory) - Wikipedia, fecha de acceso: octubre 29, 2025, <https://en.wikipedia.org/wiki/Entropy_(information_theory)>
-30. How to calculate entropy from a set of samples? - Math Stack Exchange, fecha de acceso: octubre 29, 2025, <https://math.stackexchange.com/questions/1369743/how-to-calculate-entropy-from-a-set-of-samples>
-31. www.math.tecnico.ulisboa.pt, fecha de acceso: octubre 29, 2025, <https://www.math.tecnico.ulisboa.pt/~pmartins/CTC/CTC21Notes6.pdf>
-32. Unit of information Discrete memory less source-Conditional entropies and joint entropies - Basic r - Sathyabama, fecha de acceso: octubre 29, 2025, <https://www.sathyabama.ac.in/sites/default/files/course-material/2020-10/note_1474544598.PDF>
-33. Channel Capacity of Discrete memoryless channel If the channel is noiseless, then the reception of some symbol y j uniquely dete, fecha de acceso: octubre 29, 2025, <https://www.uoanbar.edu.iq/eStoreImages/Bank/2669.pdf>
-34. Mutual information - Scholarpedia, fecha de acceso: octubre 29, 2025, <http://www.scholarpedia.org/article/Mutual_information>
-35. What is the difference between frame error rate (FER) and symbol error rate (SER)?, fecha de acceso: octubre 29, 2025, <https://dsp.stackexchange.com/questions/58035/what-is-the-difference-between-frame-error-rate-fer-and-symbol-error-rate-ser>
+1.  A Comparison of 5G Channel Coding Techniques - ResearchGate, fecha de acceso: octubre 29, 2025, https://www.researchgate.net/publication/355234657 A Comparison of 5G Channel Coding Techniques
+2.  Channel Coding Algorithms in NR - 5G | Share Technote, fecha de acceso: octubre 29, 2025, https://www.sharetechnote.com/html/5G/5G_ChannelCoding.html
+3.  5G NR Modulation Schemes Guide | PDF - Scribd, fecha de acceso: octubre 29, 2025, https://www.scribd.com/document/669557549/5G-NR-Modulations
+4.  5G Modulation and Coding Scheme | 5G MCS - Techplayon, fecha de acceso: octubre 29, 2025, https://www.techplayon.com/5g-nr-modulation-and-coding-scheme-modulation-and-code-rate/
+5.  Articulo 1.pdf
+6.  Codecs (audio and video encoding) in Mobile Networks, fecha de acceso: octubre 29, 2025, https://mobilepacketcore.com/glossary/codecs-audio-and-video-encoding-in-mobile-networks/
+7.  IVAS Codec for the NG 3GPP Voice and Audio Services, fecha de acceso: octubre 29, 2025, https://www.3gpp.org/technologies/ivas-2023
+8.  La voz sobre la red móvil 5G o Vo5G (Voice over 5G), fecha de acceso: octubre 29, 2025, https://www.ramonmillan.com/tutoriales/vo5g.php
+9.  Versatile Video Coding explained - the future of video in a 5G world - Ericsson, fecha de acceso: octubre 29, 2025, https://www.ericsson.com/en/reports-and-papers/ericsson-technology-review/articles/versatile-video-coding-explained
+10. TR 126 955-V17.0.0-5G; Video codec characteristics for 5G-based services and applications (3GPP TR 26.955 version 17.0.0 R - ETSI, fecha de acceso: octubre 29, 2025, https://www.etsi.org/deliver/etsi_tr/126900 126999/126955/17.00.00 60/tr 126955v170000p.pdf
+11. ¿Qué es el códec de video HEVC (H.265) y cuáles son sus ventajas? - Dacast, fecha de acceso: octubre 29, 2025, https://www.dacast.com/es/blog-es/hevc-video-codec/
+12. How 5G and Advanced Codecs Are Transforming IPTV Users' Experience in the world | by Xtream Online | Sep, 2025 | Medium, fecha de acceso: octubre 29, 2025, https://medium.com/@XtreamOnline/how-5g-and-advanced-codecs-are-transforming-iptv-users-experience-in-the-world-6056ff36e3f1
+13. FORMATOS Y CODECS DE VIDEO, BITRATE, RESOLUCION - elitevisión, fecha de acceso: octubre 29, 2025, https://elitevision.es/formatos-codecs-bitrate/
+14. New Codecs for 5G, fecha de acceso: octubre 29, 2025, https://dashif.org/docs/workshop-2019/04-thierry%20fautier%20-%20Harmonic%20Codec%20Comparison%205G%20Media%20Workshop Final%20v3.pdf
+15. The State of Video Codecs in 2024-Gumlet, fecha de acceso: octubre 29, 2025, https://www.gumlet.com/learn/video-codec/
+16. ¿Qué es la teoría de la información? - YouTube, fecha de acceso: octubre 29, 2025, https://www.youtube.com/watch?v=vVokVFHz8uA
+17. 5G NR Channel Codes - Article by TELCOMA, fecha de acceso: octubre 29, 2025, https://www.telcomaglobal.com/p/5g-nr-channel-codes
+18. 5G New Radio Polar Coding - MATLAB & Simulink - MathWorks, fecha de acceso: octubre 29, 2025, https://www.mathworks.com/help/5g/gs/polar-coding.html
+19. 5G/NR Channel Codes Evolution and Recommendation on Polar Codes Techplayon, fecha de acceso: octubre 29, 2025, https://www.techplayon.com/5gnr-channel-codes-evolution-consideration-3gpp-recommendation-polar-codes/
+20. Understanding the 5G NR PHY - Tetcos, fecha de acceso: octubre 29, 2025, https://www.tetcos.com/pdf/v13/Experiments/5G-NR-PHY.pdf
+21. Teoría de la Información - Modelo de comunicación, fecha de acceso: octubre 29, 2025, https://www.profesores.frc.utn.edu.ar/sistemas/ingcura/Archivos COM/Filminasteorialnfo.pdf
+22. Información - Wikipedia, la enciclopedia libre, fecha de acceso: octubre 29, 2025, https://es.wikipedia.org/wiki/Informaci%C3%B3n
+23. entropía - Bilateria, fecha de acceso: octubre 29, 2025, https://educacion.bilateria.org/tag/entropia
+24. Entropía (información) - Wikipedia, la enciclopedia libre, fecha de acceso: octubre 29, 2025, https://es.wikipedia.org/wiki/Entrop%C3%ADa_(informaci%C3%B3n)
+25. www.manuduque.com, fecha de acceso: octubre 29, 2025, https://www.manuduque.com/enciclopedia-ia/informacion-mutua/#:~:text=Definici%C3%B3n%20Formal, X%20y%20YYY%20respectivamente.
+26. 9. Teoría de la Información - Parte 2 - INFO239 Comunicaciones, fecha de acceso: octubre 29, 2025, https://phuijse.github.io/UACH-INFO185/clases/unidad1/10 codificaci%C3%B3n_de canal.html
+27. Información Mutua - Manu Duque, fecha de acceso: octubre 29, 2025, https://www.manuduque.com/enciclopedia-ia/informacion-mutua/
+28. Información mutua - Wikipedia, la enciclopedia libre, fecha de acceso: octubre 29, 2025, https://es.wikipedia.org/wiki/Informaci%C3%B3n_mutua
+29. PESQ - Perceptual Evaluation Speech Quality - Opale Systems, fecha de acceso: octubre 29, 2025, https://www.opalesystems.com/Tech-Blog/2-PESQ-Perceptual-Evaluation-Speech-Quality.en.htm
+30. Perceptual Audio Testing: Evaluating Voice Quality in APx, fecha de acceso: octubre 29, 2025, https://www.ap.com/news/pesq-perceptual-audio-testing-with-apx
+31. Objective Measures of Perceptual Audio Quality Reviewed: An Evaluation of Their Application Domain Dependence - arXiv, fecha de acceso: octubre 29, 2025, https://arxiv.org/pdf/2110.11438
+32. 6.2. Objective quality evaluation - Introduction to Speech Processing, fecha de acceso: octubre 29, 2025, https://speechprocessingbook.aalto.fi/Evaluation/Objective_quality_evaluation.html
