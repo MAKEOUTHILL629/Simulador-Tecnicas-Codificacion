@@ -593,8 +593,28 @@ class Simulator {
         }
         
         const ber = minLength > 0 ? bitErrors / minLength : 0;
-        const ser = Metrics.calculateSER(transmittedBits, receivedBits, 
+        
+        // Calculate SER - handle potential null return
+        let ser = Metrics.calculateSER(transmittedBits, receivedBits, 
             Modulator.getBitsPerSymbol(this.config.modulation));
+        
+        // If SER calculation failed (null), calculate it manually
+        if (ser === null) {
+            const bitsPerSymbol = Modulator.getBitsPerSymbol(this.config.modulation);
+            let symbolErrors = 0;
+            for (let i = 0; i < minLength; i += bitsPerSymbol) {
+                let symbolError = false;
+                for (let j = 0; j < bitsPerSymbol && i + j < minLength; j++) {
+                    if (transmittedBits[i + j] !== receivedBits[i + j]) {
+                        symbolError = true;
+                        break;
+                    }
+                }
+                if (symbolError) symbolErrors++;
+            }
+            const numSymbols = Math.ceil(minLength / bitsPerSymbol);
+            ser = numSymbols > 0 ? symbolErrors / numSymbols : 0;
+        }
         
         this.results.metrics = {
             ber,
@@ -672,8 +692,10 @@ class Simulator {
     displayMetrics() {
         const tbody = document.getElementById('metricsTableBody');
         
-        // Check if metrics exist
-        if (!this.results || !this.results.metrics) {
+        // Check if metrics exist and have valid values
+        if (!this.results || !this.results.metrics || 
+            this.results.metrics.ber === null || this.results.metrics.ber === undefined ||
+            this.results.metrics.ser === null || this.results.metrics.ser === undefined) {
             tbody.innerHTML = `<tr><td colspan="2">Esperando simulación...</td></tr>`;
             return;
         }
@@ -695,8 +717,12 @@ class Simulator {
     displayInfoTheory() {
         const tbody = document.getElementById('infoTheoryTableBody');
         
-        // Check if info theory results exist
-        if (!this.results || !this.results.infoTheory) {
+        // Check if info theory results exist and have valid values
+        if (!this.results || !this.results.infoTheory ||
+            this.results.infoTheory.entropyX === null || this.results.infoTheory.entropyX === undefined ||
+            this.results.infoTheory.entropyY === null || this.results.infoTheory.entropyY === undefined ||
+            this.results.infoTheory.mutualInfo === null || this.results.infoTheory.mutualInfo === undefined ||
+            this.results.infoTheory.capacity === null || this.results.infoTheory.capacity === undefined) {
             tbody.innerHTML = `<tr><td colspan="2">Esperando simulación...</td></tr>`;
             return;
         }
