@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simulador de Cadena de Comunicación Digital</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <script src="https://cdn.plot.ly/plotly-2.26.0.min.js"></script>
+</head>
+<body>
+    <div class="header">
+        <h1>Simulador de Cadena de Comunicación Digital</h1>
+        <p class="subtitle">Modelado de Sistemas 5G/6G - Arquitectura SSCC con Conceptos JSCC</p>
+    </div>
+
+    <div class="container">
+        <!-- Columna Izquierda: Panel de Control -->
+        <aside class="control-panel">
+            <h2>Parámetros de Configuración</h2>
+            
+            <!-- Fuente -->
+            <section class="param-section">
+                <h3>1. Fuente de Datos</h3>
+                <label for="sourceType">Tipo de Fuente:</label>
+                <select id="sourceType">
+                    <option value="text">Texto</option>
+                    <option value="image">Imagen</option>
+                    <option value="audio">Audio</option>
+                    <option value="video">Video (Simplificado)</option>
+                </select>
+
+                <!-- Text Input -->
+                <div id="textInput" class="source-input">
+                    <label for="textArea">Ingrese texto:</label>
+                    <textarea id="textArea" rows="4" placeholder="Escriba su texto aquí...">Hola mundo</textarea>
+                    <button id="loadSampleText" class="btn-secondary">Cargar Texto de Muestra</button>
+                </div>
+
+                <!-- Image Input -->
+                <div id="imageInput" class="source-input hidden">
+                    <label for="imageFile">Cargar imagen:</label>
+                    <input type="file" id="imageFile" accept="image/png, image/jpeg">
+                    <div class="sample-buttons">
+                        <button id="loadLena" class="btn-secondary">Lena</button>
+                        <button id="loadBaboon" class="btn-secondary">Baboon</button>
+                    </div>
+                </div>
+
+                <!-- Audio Input -->
+                <div id="audioInput" class="source-input hidden">
+                    <label for="audioFile">Cargar audio:</label>
+                    <input type="file" id="audioFile" accept="audio/wav">
+                    <button id="loadSampleAudio" class="btn-secondary">Audio de Muestra</button>
+                </div>
+
+                <!-- Video Input -->
+                <div id="videoInput" class="source-input hidden">
+                    <button id="generateSyntheticVideo" class="btn-secondary">Generar Video Sintético</button>
+                    <p class="info-text">Se generarán 10 fotogramas de animación</p>
+                </div>
+            </section>
+
+            <!-- Codificación de Fuente -->
+            <section class="param-section">
+                <h3>2. Codificación de Fuente</h3>
+                <label for="sourceCodec">Algoritmo:</label>
+                <select id="sourceCodec">
+                    <option value="none">Ninguno</option>
+                    <option value="huffman">Huffman</option>
+                    <option value="dct">Basado en DCT (Imagen/Video)</option>
+                    <option value="mdct">Basado en MDCT (Audio)</option>
+                    <option value="learned">Codificador Aprendido (6G)</option>
+                </select>
+
+                <!-- Quality parameter for DCT -->
+                <div id="dctQuality" class="codec-param hidden">
+                    <label for="qualityFactor">Factor de Calidad (1-100):</label>
+                    <input type="range" id="qualityFactor" min="1" max="100" value="70">
+                    <span id="qualityValue">70</span>
+                </div>
+            </section>
+
+            <!-- Codificación de Canal -->
+            <section class="param-section">
+                <h3>3. Codificación de Canal</h3>
+                <label for="channelCodec">Algoritmo:</label>
+                <select id="channelCodec">
+                    <option value="none">Ninguno</option>
+                    <option value="ldpc">LDPC</option>
+                    <option value="polar">Polar</option>
+                </select>
+
+                <div id="codeRateParam" class="codec-param">
+                    <label for="codeRate">Tasa de Código:</label>
+                    <select id="codeRate">
+                        <option value="0.5">1/2</option>
+                        <option value="0.667">2/3</option>
+                        <option value="0.75">3/4</option>
+                    </select>
+                </div>
+            </section>
+
+            <!-- Modulación -->
+            <section class="param-section">
+                <h3>4. Modulación</h3>
+                <label for="modulation">Esquema:</label>
+                <select id="modulation">
+                    <option value="qpsk">QPSK (2 bits/símbolo)</option>
+                    <option value="16qam">16-QAM (4 bits/símbolo)</option>
+                    <option value="64qam">64-QAM (6 bits/símbolo)</option>
+                    <option value="256qam">256-QAM (8 bits/símbolo)</option>
+                </select>
+            </section>
+
+            <!-- Canal -->
+            <section class="param-section">
+                <h3>5. Canal</h3>
+                <label for="channelMetric">Parámetro:</label>
+                <select id="channelMetric">
+                    <option value="snr">SNR (dB)</option>
+                    <option value="ebno">Eb/N0 (dB)</option>
+                </select>
+
+                <label for="channelValue">Valor:</label>
+                <input type="number" id="channelValue" value="15" step="0.5" min="-10" max="40">
+                <span class="unit">dB</span>
+            </section>
+
+            <!-- Botón de ejecución -->
+            <button id="runSimulation" class="btn-primary">
+                <span id="runButtonText">Ejecutar Simulación</span>
+            </button>
+
+            <div id="progressBar" class="progress-bar hidden">
+                <div id="progressFill" class="progress-fill"></div>
+            </div>
+        </aside>
+
+        <!-- Columna Central: Pipeline de Visualización -->
+        <main class="visualization-pipeline">
+            <div class="pipeline-stage" id="stage1">
+                <h3>1. Entrada Original</h3>
+                <div class="stage-content" id="inputDisplay"></div>
+            </div>
+
+            <div class="pipeline-stage" id="stage2">
+                <h3>2. Datos Codificados de Fuente</h3>
+                <div class="stage-content" id="sourceEncodedDisplay"></div>
+            </div>
+
+            <div class="pipeline-stage" id="stage3">
+                <h3>3. Datos Codificados de Canal</h3>
+                <div class="stage-content" id="channelEncodedDisplay"></div>
+            </div>
+
+            <div class="pipeline-stage" id="stage4">
+                <h3>4. Señal Modulada</h3>
+                <div class="stage-content">
+                    <div id="constellationPreChannel"></div>
+                </div>
+            </div>
+
+            <div class="pipeline-stage" id="stage5">
+                <h3>5. Salida del Canal (con Ruido)</h3>
+                <div class="stage-content">
+                    <div id="constellationPostChannel"></div>
+                </div>
+            </div>
+
+            <div class="pipeline-stage" id="stage6">
+                <h3>6. Señal Demodulada</h3>
+                <div class="stage-content">
+                    <div id="llrHistogram"></div>
+                </div>
+            </div>
+
+            <div class="pipeline-stage" id="stage7">
+                <h3>7. Datos Decodificados</h3>
+                <div class="stage-content" id="decodedDisplay"></div>
+            </div>
+
+            <div class="pipeline-stage" id="stage8">
+                <h3>8. Salida Final Reconstruida</h3>
+                <div class="stage-content" id="outputDisplay"></div>
+            </div>
+        </main>
+
+        <!-- Columna Derecha: Análisis y Resultados -->
+        <aside class="results-panel">
+            <h2>Análisis y Resultados</h2>
+
+            <!-- Comparación Visual -->
+            <section class="results-section">
+                <h3>Comparación</h3>
+                <div id="comparisonDisplay">
+                    <p class="placeholder-text">Ejecute la simulación para ver resultados</p>
+                </div>
+            </section>
+
+            <!-- Métricas de Integridad -->
+            <section class="results-section">
+                <h3>Métricas de Rendimiento</h3>
+                <div id="metricsDisplay">
+                    <table class="metrics-table">
+                        <tbody id="metricsTableBody">
+                            <tr><td colspan="2" class="placeholder-text">Esperando simulación...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- Teoría de la Información -->
+            <section class="results-section">
+                <h3>Teoría de la Información</h3>
+                <div id="infoTheoryDisplay">
+                    <table class="metrics-table">
+                        <tbody id="infoTheoryTableBody">
+                            <tr><td colspan="2" class="placeholder-text">Esperando simulación...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- Estadísticas del Sistema -->
+            <section class="results-section">
+                <h3>Estadísticas del Sistema</h3>
+                <div id="systemStats">
+                    <table class="metrics-table">
+                        <tbody id="systemStatsBody">
+                            <tr><td colspan="2" class="placeholder-text">Esperando simulación...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+        </aside>
+    </div>
+
+    <!-- Scripts -->
+    <script type="module" src="js/main.js"></script>
+</body>
+</html>
