@@ -671,6 +671,13 @@ class Simulator {
 
     displayMetrics() {
         const tbody = document.getElementById('metricsTableBody');
+        
+        // Check if metrics exist
+        if (!this.results || !this.results.metrics) {
+            tbody.innerHTML = `<tr><td colspan="2">Esperando simulación...</td></tr>`;
+            return;
+        }
+        
         const m = this.results.metrics;
         
         // Color code BER
@@ -687,6 +694,13 @@ class Simulator {
 
     displayInfoTheory() {
         const tbody = document.getElementById('infoTheoryTableBody');
+        
+        // Check if info theory results exist
+        if (!this.results || !this.results.infoTheory) {
+            tbody.innerHTML = `<tr><td colspan="2">Esperando simulación...</td></tr>`;
+            return;
+        }
+        
         const it = this.results.infoTheory;
         tbody.innerHTML = `
             <tr><td>H(X) Entropía Entrada</td><td class="metric-value">${it.entropyX.toFixed(3)} bits/símbolo</td></tr>

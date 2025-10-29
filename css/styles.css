@@ -537,6 +537,22 @@ canvas {
     animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }
 
+/* Metric color coding */
+.metric-good {
+    color: #10b981;
+    font-weight: 600;
+}
+
+.metric-warning {
+    color: #f59e0b;
+    font-weight: 600;
+}
+
+.metric-bad {
+    color: #ef4444;
+    font-weight: 600;
+}
+
 /* Tooltip */
 .tooltip {
     position: relative;
