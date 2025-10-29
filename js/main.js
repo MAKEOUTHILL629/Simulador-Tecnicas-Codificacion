@@ -362,7 +362,7 @@ class Simulator {
 
             // Step 8: Source decoding
             await this.updateProgress(90, 'Decodificando fuente...');
-            const reconstructed = await this.decodeSource(decodedChannel, sourceData);
+            const reconstructed = await this.decodeSource(decodedChannel, sourceData, encodedSource);
 
             // Step 9: Calculate metrics
             await this.updateProgress(95, 'Calculando métricas...');
@@ -449,16 +449,24 @@ class Simulator {
             Visualizer.displayBinary(data.binary, 'sourceEncodedDisplay', 400);
             return { bits, originalLength: data.length, encodedLength: data.length };
         } else if (codec === 'huffman') {
-            // Apply Huffman coding
-            const huffman = new HuffmanCoder();
-            const encoded = huffman.encode(data.binary);
-            Visualizer.displayBinary(encoded.encoded, 'sourceEncodedDisplay', 400);
-            return { 
-                bits: encoded.encoded.split('').map(b => parseInt(b)),
-                huffmanTree: encoded.tree,
-                originalLength: data.length,
-                encodedLength: encoded.encoded.length
-            };
+            // Apply Huffman coding to the ORIGINAL text, not the binary
+            if (data.type === 'text') {
+                const huffman = new HuffmanCoder();
+                const encoded = huffman.encode(data.original); // Encode original text characters
+                Visualizer.displayBinary(encoded.encoded, 'sourceEncodedDisplay', 400);
+                return { 
+                    bits: encoded.encoded.split('').map(b => parseInt(b)),
+                    huffmanTree: encoded.tree,
+                    originalLength: data.length,
+                    encodedLength: encoded.encoded.length,
+                    isHuffmanEncoded: true
+                };
+            } else {
+                // For non-text, just use binary (Huffman not applicable)
+                const bits = data.binary.split('').map(b => parseInt(b));
+                Visualizer.displayBinary(data.binary, 'sourceEncodedDisplay', 400);
+                return { bits, originalLength: data.length, encodedLength: data.length };
+            }
         }
         
         // Default: no encoding
@@ -563,19 +571,31 @@ class Simulator {
         return channelData.decoder.decode(llrs.llrs);
     }
 
-    async decodeSource(data, sourceData) {
-        // For now, just convert bits back to text if it's text
+    async decodeSource(data, sourceData, encodedSource) {
+        // Handle source decoding based on codec used
         if (this.config.sourceType === 'text') {
-            const bytes = [];
-            for (let i = 0; i < data.length; i += 8) {
-                const byte = data.slice(i, i + 8);
-                const byteStr = byte.join('');
-                bytes.push(parseInt(byteStr.padEnd(8, '0'), 2));
+            // Check if Huffman coding was used
+            if (this.config.sourceCodec === 'huffman' && encodedSource.isHuffmanEncoded && encodedSource.huffmanTree) {
+                // Decode Huffman to get original text
+                const huffman = new HuffmanCoder();
+                const decodedText = huffman.decode(data.join(''), encodedSource.huffmanTree);
+                return { type: 'text', text: decodedText };
+            } else {
+                // No source coding, bits are the binary representation of text
+                // Convert binary bits to text
+                const binaryString = data.join('');
+                const bytes = [];
+                for (let i = 0; i < binaryString.length; i += 8) {
+                    const byteStr = binaryString.substr(i, 8);
+                    if (byteStr.length === 8) {
+                        bytes.push(parseInt(byteStr, 2));
+                    }
+                }
+                
+                const decoder = new TextDecoder('utf-8', { fatal: false });
+                const text = decoder.decode(new Uint8Array(bytes));
+                return { type: 'text', text };
             }
-            
-            const decoder = new TextDecoder();
-            const text = decoder.decode(new Uint8Array(bytes));
-            return { type: 'text', text };
         }
         
         return data;
