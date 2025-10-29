@@ -304,6 +304,52 @@ La modulación mapea bits a símbolos complejos para transmisión.
   - I(X;Y) << H(X) = pérdida significativa de información
   - I(X;Y) / H(X) = eficiencia de transmisión
 
+### 4.4. ¿Cómo Saber si los Resultados son Correctos?
+
+#### **Para Simulación de Texto (sin codificación, SNR alto)**
+
+**Configuración típica de prueba**: Texto "Hola mundo", sin codificación de fuente, sin codificación de canal, QPSK, SNR = 15 dB
+
+**Resultados esperados buenos** ✅:
+- **BER**: 0.00e+0 o muy cerca de 0 (10⁻⁶ o menor)
+- **SER**: 0.00e+0 o muy cerca de 0
+- **Errores de bits**: 0 de X bits (donde X depende del texto)
+- **H(X) Entropía Entrada**: ~1.000 bits/símbolo (para bits binarios equiprobables)
+- **H(Y) Entropía Salida**: ~1.000 bits/símbolo (debe ser similar a entrada)
+- **I(X;Y) Info. Mutua**: ~1.000 bits/símbolo (debe ser igual a H(X) si no hay errores)
+- **C Capacidad (Shannon)**: Valor que depende del SNR
+  - Para SNR = 15 dB: C ≈ 5.0 bits/canal use
+  - Para SNR = 20 dB: C ≈ 6.7 bits/canal use
+- **Texto Reconstruido**: Debe ser **idéntico** al original
+- **Distancia de Levenshtein**: 0 (sin diferencias)
+
+#### **Indicadores de problemas** ❌:
+- BER > 0.01 con SNR alto (>15 dB) y modulación simple (QPSK)
+- Texto reconstruido diferente al original con configuración conservadora
+- Entropía de salida H(Y) significativamente mayor que H(X) (señal de ruido excesivo)
+- Información Mutua I(X;Y) < 0.5 × H(X) (pérdida severa de información)
+
+#### **Rangos típicos según condiciones**
+
+| SNR (dB) | Modulación | Código Canal | BER Esperado | Calidad |
+|----------|-----------|-------------|--------------|---------|
+| 20+ | QPSK | LDPC/Polar | < 10⁻⁶ | Excelente |
+| 15-20 | 16-QAM | LDPC/Polar | 10⁻⁵ - 10⁻⁴ | Muy buena |
+| 10-15 | QPSK | LDPC | 10⁻⁴ - 10⁻³ | Buena |
+| 5-10 | QPSK | Ninguno | 10⁻² - 10⁻¹ | Aceptable |
+| < 5 | Cualquiera | Cualquiera | > 10⁻¹ | Mala |
+
+#### **Relación entre métricas (valores típicos)**
+- **Con SNR = 15 dB, QPSK, LDPC 1/2**: BER ≈ 10⁻⁵, I(X;Y) ≈ 0.99 × H(X)
+- **Con SNR = 10 dB, 16-QAM, sin código**: BER ≈ 10⁻³, I(X;Y) ≈ 0.95 × H(X)
+- **Con SNR = 5 dB, cualquiera, sin código**: BER ≈ 10⁻², I(X;Y) ≈ 0.80 × H(X)
+
+#### **Validación rápida de resultados**
+1. ✅ **Test básico**: Con SNR ≥ 15 dB y QPSK, el texto debe reconstruirse perfectamente
+2. ✅ **Test de ruido**: Disminuir SNR debe aumentar BER de forma exponencial
+3. ✅ **Test de código**: Agregar LDPC debe mejorar BER en ~3-6 dB
+4. ✅ **Test de modulación**: Mayor orden (256-QAM) debe tener peor BER que QPSK al mismo SNR
+
 ---
 
 ## 5. Casos de Uso y Experimentos Sugeridos
