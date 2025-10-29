@@ -125,6 +125,12 @@ Implementación de un simulador de sistemas de comunicación multi-generacional 
 - [x] Actualización de `requirements.txt` con pytest y streamlit
 - [x] Instrucciones de testing en documentación
 
+### 15. Scripts de Validación
+- [x] `validate_ber.py` - Compara BER simulado vs teórico
+- [x] Validación de QPSK, 16-QAM, 64-QAM
+- [x] Generación de gráficas comparativas
+- [x] Análisis de error relativo
+
 ---
 
 ## 🚧 En Progreso
