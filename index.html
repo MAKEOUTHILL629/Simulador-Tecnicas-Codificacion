@@ -11,12 +11,65 @@
     <div class="header">
         <h1>Simulador de Cadena de Comunicación Digital</h1>
         <p class="subtitle">Modelado de Sistemas 5G/6G - Arquitectura SSCC con Conceptos JSCC</p>
+        <button id="showHelp" class="btn-help">❓ Ayuda</button>
+    </div>
+    
+    <!-- Help Modal -->
+    <div id="helpModal" class="modal hidden">
+        <div class="modal-content">
+            <span class="close-modal">&times;</span>
+            <h2>Guía Rápida</h2>
+            <div class="help-section">
+                <h3>Cómo usar el simulador:</h3>
+                <ol>
+                    <li><strong>Seleccione la generación</strong> (5G, 5G Avanzado o 6G)</li>
+                    <li><strong>Elija el tipo de fuente</strong> (para empezar, use "Texto")</li>
+                    <li><strong>Configure los parámetros</strong> o use los valores predeterminados</li>
+                    <li><strong>Haga clic en "Ejecutar Simulación"</strong></li>
+                    <li><strong>Observe los resultados</strong> en las columnas central y derecha</li>
+                </ol>
+                
+                <h3>Parámetros importantes:</h3>
+                <ul>
+                    <li><strong>SNR (dB)</strong>: Relación señal/ruido. Mayor = menos errores
+                        <br><small>• 0-10 dB: Canal muy ruidoso<br>• 10-20 dB: Canal normal<br>• >20 dB: Canal excelente</small>
+                    </li>
+                    <li><strong>Modulación</strong>: Cómo se representan los bits
+                        <br><small>• QPSK: Más robusto, más lento<br>• 256-QAM: Más rápido, menos robusto</small>
+                    </li>
+                    <li><strong>Codificación de canal</strong>: Protección contra errores
+                        <br><small>• Ninguno: Sin protección<br>• LDPC/Polar: Códigos 5G estándar</small>
+                    </li>
+                </ul>
+                
+                <h3>Interpretando resultados:</h3>
+                <ul>
+                    <li><strong>BER</strong> (Bit Error Rate): Proporción de bits erróneos
+                        <br><small>• <10⁻⁶: Excelente<br>• 10⁻³ - 10⁻²: Aceptable<br>• >10⁻¹: Mala calidad</small>
+                    </li>
+                    <li><strong>Diagramas de constelación</strong>: Puntos dispersos = más ruido</li>
+                    <li><strong>Entropía</strong>: Información promedio por símbolo</li>
+                </ul>
+            </div>
+        </div>
     </div>
 
     <div class="container">
         <!-- Columna Izquierda: Panel de Control -->
         <aside class="control-panel">
             <h2>Parámetros de Configuración</h2>
+            
+            <!-- Generación del Sistema -->
+            <section class="param-section">
+                <h3>0. Generación del Sistema</h3>
+                <label for="systemGeneration">Tecnología:</label>
+                <select id="systemGeneration">
+                    <option value="5g">5G (eMBB)</option>
+                    <option value="5g-advanced">5G Avanzado</option>
+                    <option value="6g">6G (Conceptual)</option>
+                </select>
+                <p class="info-text" id="generationInfo">5G: LDPC/Polar, hasta 256-QAM</p>
+            </section>
             
             <!-- Fuente -->
             <section class="param-section">

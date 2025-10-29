@@ -17,6 +17,11 @@ class Simulator {
     }
 
     initUI() {
+        // System generation selector
+        document.getElementById('systemGeneration').addEventListener('change', (e) => {
+            this.handleGenerationChange(e.target.value);
+        });
+        
         // Source type selector
         document.getElementById('sourceType').addEventListener('change', (e) => {
             this.handleSourceTypeChange(e.target.value);
@@ -73,8 +78,50 @@ class Simulator {
             this.handleAudioUpload(e.target.files[0]);
         });
 
+        // Help modal
+        document.getElementById('showHelp').addEventListener('click', () => {
+            document.getElementById('helpModal').classList.remove('hidden');
+        });
+        document.querySelector('.close-modal').addEventListener('click', () => {
+            document.getElementById('helpModal').classList.add('hidden');
+        });
+        window.addEventListener('click', (e) => {
+            const modal = document.getElementById('helpModal');
+            if (e.target === modal) {
+                modal.classList.add('hidden');
+            }
+        });
+
         // Initialize with text input visible
         this.handleSourceTypeChange('text');
+        this.handleGenerationChange('5g');
+    }
+
+    handleGenerationChange(generation) {
+        const infoText = document.getElementById('generationInfo');
+        const sourceCodec = document.getElementById('sourceCodec');
+        const channelCodec = document.getElementById('channelCodec');
+        
+        // Update description and available options based on generation
+        if (generation === '5g') {
+            infoText.textContent = '5G: LDPC/Polar para canal, hasta 256-QAM';
+            // Enable standard codecs
+            Array.from(sourceCodec.options).forEach(opt => {
+                if (opt.value === 'learned') opt.disabled = true;
+                else opt.disabled = false;
+            });
+        } else if (generation === '5g-advanced') {
+            infoText.textContent = '5G Avanzado: Mejoras en MIMO, eficiencia espectral';
+            Array.from(sourceCodec.options).forEach(opt => {
+                if (opt.value === 'learned') opt.disabled = true;
+            });
+        } else if (generation === '6g') {
+            infoText.textContent = '6G: Codificación conjunta (JSCC/DeepJSCC)';
+            // Enable learned codec for 6G
+            Array.from(sourceCodec.options).forEach(opt => {
+                opt.disabled = false;
+            });
+        }
     }
 
     handleSourceTypeChange(type) {
@@ -311,19 +358,19 @@ class Simulator {
 
             // Step 7: Channel decoding
             await this.updateProgress(80, 'Decodificando canal...');
-            const decodedChannel = await this.decodeChannel(llrs);
+            const decodedChannel = await this.decodeChannel(llrs, encodedChannel);
 
             // Step 8: Source decoding
             await this.updateProgress(90, 'Decodificando fuente...');
-            const reconstructed = await this.decodeSource(decodedChannel);
+            const reconstructed = await this.decodeSource(decodedChannel, sourceData);
 
             // Step 9: Calculate metrics
             await this.updateProgress(95, 'Calculando métricas...');
-            await this.calculateMetrics(sourceData, reconstructed, encodedSource, llrs);
+            await this.calculateMetrics(sourceData, reconstructed, encodedSource.bits, decodedChannel);
 
             // Step 10: Update all visualizations
             await this.updateProgress(100, 'Completado');
-            await this.updateAllVisualizations();
+            await this.updateAllVisualizations(sourceData, reconstructed);
 
             // Re-enable button
             runButton.disabled = false;
@@ -336,7 +383,16 @@ class Simulator {
 
         } catch (error) {
             console.error('Error en la simulación:', error);
-            alert('Error durante la simulación: ' + error.message);
+            
+            // Show user-friendly error message
+            const errorMsg = document.createElement('div');
+            errorMsg.style.cssText = 'background: #fee; border: 2px solid #c00; padding: 1rem; margin: 1rem; border-radius: 0.5rem;';
+            errorMsg.innerHTML = `
+                <strong style="color: #c00;">❌ Error en la simulación</strong>
+                <p style="margin: 0.5rem 0;">${error.message}</p>
+                <p style="font-size: 0.85rem; color: #666;">Revise la consola del navegador (F12) para más detalles.</p>
+            `;
+            document.getElementById('inputDisplay').prepend(errorMsg);
             
             const runButton = document.getElementById('runSimulation');
             runButton.disabled = false;
@@ -353,6 +409,7 @@ class Simulator {
 
     getConfiguration() {
         return {
+            generation: document.getElementById('systemGeneration').value,
             sourceType: document.getElementById('sourceType').value,
             sourceCodec: document.getElementById('sourceCodec').value,
             qualityFactor: parseInt(document.getElementById('qualityFactor').value),
@@ -379,56 +436,234 @@ class Simulator {
     }
 
     async encodeSource(data) {
-        // For now, return simple binary representation
-        // Full implementation would use the selected codec
-        return { data: data, encoded: true };
+        const codec = this.config.sourceCodec;
+        
+        // Display input
+        if (data.type === 'text') {
+            Visualizer.displayText(data.original, 'inputDisplay');
+        }
+        
+        if (codec === 'none') {
+            // Just convert to binary bits array
+            const bits = data.binary.split('').map(b => parseInt(b));
+            Visualizer.displayBinary(data.binary, 'sourceEncodedDisplay', 400);
+            return { bits, originalLength: data.length, encodedLength: data.length };
+        } else if (codec === 'huffman') {
+            // Apply Huffman coding
+            const huffman = new HuffmanCoder();
+            const encoded = huffman.encode(data.binary);
+            Visualizer.displayBinary(encoded.encoded, 'sourceEncodedDisplay', 400);
+            return { 
+                bits: encoded.encoded.split('').map(b => parseInt(b)),
+                huffmanTree: encoded.tree,
+                originalLength: data.length,
+                encodedLength: encoded.encoded.length
+            };
+        }
+        
+        // Default: no encoding
+        const bits = data.binary.split('').map(b => parseInt(b));
+        Visualizer.displayBinary(data.binary, 'sourceEncodedDisplay', 400);
+        return { bits, originalLength: data.length, encodedLength: data.length };
     }
 
     async encodeChannel(data) {
-        // Placeholder for channel encoding
-        return data;
+        const codec = this.config.channelCodec;
+        const bits = data.bits;
+        
+        if (codec === 'none') {
+            const display = document.getElementById('channelEncodedDisplay');
+            display.innerHTML = `<p class="info-text">Sin codificación de canal</p>
+                <p class="info-text">${bits.length} bits</p>`;
+            return { bits, codeRate: 1.0 };
+        } else if (codec === 'ldpc') {
+            const coder = new LDPCCoder(this.config.codeRate, 648);
+            const encoded = coder.encode(bits);
+            const display = document.getElementById('channelEncodedDisplay');
+            display.innerHTML = `<p class="info-text">LDPC (tasa ${this.config.codeRate})</p>
+                <p class="info-text">${encoded.length} bits codificados</p>
+                <pre class="bits-display">${encoded.slice(0, 200).join('').match(/.{1,8}/g).join(' ')}...</pre>`;
+            return { bits: encoded, codeRate: this.config.codeRate, decoder: coder };
+        } else if (codec === 'polar') {
+            const k = Math.floor(bits.length * this.config.codeRate);
+            const n = Math.pow(2, Math.ceil(Math.log2(bits.length / this.config.codeRate)));
+            const coder = new PolarCoder(n, k);
+            const encoded = coder.encode(bits);
+            const display = document.getElementById('channelEncodedDisplay');
+            display.innerHTML = `<p class="info-text">Polar (tasa ${this.config.codeRate})</p>
+                <p class="info-text">${encoded.length} bits codificados</p>
+                <pre class="bits-display">${encoded.slice(0, 200).join('').match(/.{1,8}/g).join(' ')}...</pre>`;
+            return { bits: encoded, codeRate: this.config.codeRate, decoder: coder };
+        }
+        
+        return { bits, codeRate: 1.0 };
     }
 
     async modulate(data) {
-        // Placeholder for modulation
-        return [];
+        const scheme = this.config.modulation;
+        const symbols = Modulator.modulate(data.bits, scheme);
+        
+        // Visualize constellation
+        Visualizer.plotConstellation(symbols, 'constellationPreChannel', 'Señal Modulada (Pre-Canal)');
+        
+        return { symbols, scheme, bitsPerSymbol: Modulator.getBitsPerSymbol(scheme) };
     }
 
     async applyChannel(signal) {
-        // Placeholder for channel noise
-        return signal;
+        const snrDB = this.config.channelValue;
+        const channelResult = AWGNChannel.addNoise(
+            signal.symbols, 
+            snrDB, 
+            signal.bitsPerSymbol,
+            1.0
+        );
+        
+        // Visualize received signal with ideal points
+        Visualizer.plotConstellationWithIdeal(
+            channelResult.symbols,
+            signal.symbols,
+            'constellationPostChannel',
+            `Señal Recibida (SNR = ${snrDB} dB)`
+        );
+        
+        return { 
+            symbols: channelResult.symbols, 
+            original: signal.symbols,
+            noiseVariance: channelResult.noiseVariance 
+        };
     }
 
-    async demodulate(received, original) {
-        // Placeholder for demodulation
-        return [];
+    async demodulate(received, modulationData) {
+        const scheme = modulationData.scheme;
+        const llrs = Demodulator.demodulateSoft(
+            received.symbols,
+            scheme,
+            received.noiseVariance
+        );
+        
+        // Visualize LLRs
+        if (llrs.length > 0) {
+            Visualizer.plotLLRHistogram(llrs, 'llrHistogram');
+        }
+        
+        const display = document.getElementById('decodedDisplay');
+        display.innerHTML = `<p class="info-text">${llrs.length} LLRs calculados</p>
+            <p class="info-text">Rango: [${Math.min(...llrs).toFixed(2)}, ${Math.max(...llrs).toFixed(2)}]</p>`;
+        
+        return { llrs, scheme };
     }
 
-    async decodeChannel(llrs) {
-        // Placeholder for channel decoding
-        return null;
+    async decodeChannel(llrs, channelData) {
+        if (!channelData.decoder) {
+            // Hard decision on LLRs
+            const bits = llrs.llrs.map(llr => llr < 0 ? 1 : 0);
+            return bits;
+        }
+        
+        return channelData.decoder.decode(llrs.llrs);
     }
 
-    async decodeSource(data) {
-        // Placeholder for source decoding
+    async decodeSource(data, sourceData) {
+        // For now, just convert bits back to text if it's text
+        if (this.config.sourceType === 'text') {
+            const bytes = [];
+            for (let i = 0; i < data.length; i += 8) {
+                const byte = data.slice(i, i + 8);
+                const byteStr = byte.join('');
+                bytes.push(parseInt(byteStr.padEnd(8, '0'), 2));
+            }
+            
+            const decoder = new TextDecoder();
+            const text = decoder.decode(new Uint8Array(bytes));
+            return { type: 'text', text };
+        }
+        
         return data;
     }
 
-    async calculateMetrics(original, reconstructed, encoded, llrs) {
+    async calculateMetrics(sourceData, reconstructed, transmittedBits, receivedBits) {
+        // Calculate BER
+        let bitErrors = 0;
+        const minLength = Math.min(transmittedBits.length, receivedBits.length);
+        
+        for (let i = 0; i < minLength; i++) {
+            if (transmittedBits[i] !== receivedBits[i]) {
+                bitErrors++;
+            }
+        }
+        
+        const ber = minLength > 0 ? bitErrors / minLength : 0;
+        const ser = Metrics.calculateSER(transmittedBits, receivedBits, 
+            Modulator.getBitsPerSymbol(this.config.modulation));
+        
         this.results.metrics = {
-            ber: 0,
-            ser: 0,
-            psnr: 0,
-            ssim: 0
+            ber,
+            ser,
+            bitErrors,
+            totalBits: minLength
         };
+        
+        // Calculate information theory metrics
+        const bitsArray = sourceData.binary.split('').map(b => parseInt(b));
+        const entropyX = InformationTheory.calculateEntropy(bitsArray);
+        const entropyY = InformationTheory.calculateEntropy(receivedBits);
+        const mutualInfo = InformationTheory.calculateMutualInformation(
+            bitsArray.slice(0, minLength), 
+            receivedBits.slice(0, minLength)
+        );
+        
         this.results.infoTheory = {
-            entropyX: 0,
-            entropyY: 0,
-            mutualInfo: 0
+            entropyX,
+            entropyY,
+            mutualInfo,
+            capacity: InformationTheory.channelCapacityDB(this.config.channelValue)
         };
+        
+        // Text comparison
+        if (sourceData.type === 'text' && reconstructed.type === 'text') {
+            this.results.textComparison = {
+                original: sourceData.original,
+                reconstructed: reconstructed.text,
+                levenshtein: Metrics.levenshteinDistance(sourceData.original, reconstructed.text)
+            };
+        }
     }
 
-    async updateAllVisualizations() {
+    async updateAllVisualizations(sourceData, reconstructed) {
+        // Update output display
+        if (reconstructed && reconstructed.type === 'text') {
+            const outputDisplay = document.getElementById('outputDisplay');
+            outputDisplay.innerHTML = `
+                <h4>Texto Reconstruido:</h4>
+                <pre style="white-space: pre-wrap; word-wrap: break-word;">${reconstructed.text}</pre>
+            `;
+        }
+        
+        // Update comparison
+        if (this.results.textComparison) {
+            const compDisplay = document.getElementById('comparisonDisplay');
+            compDisplay.innerHTML = `
+                <div style="margin-bottom: 1rem;">
+                    <h4>Original:</h4>
+                    <pre style="white-space: pre-wrap; word-wrap: break-word; font-size: 0.85rem;">${this.results.textComparison.original}</pre>
+                </div>
+                <div>
+                    <h4>Reconstruido:</h4>
+                    <pre style="white-space: pre-wrap; word-wrap: break-word; font-size: 0.85rem;">${this.results.textComparison.reconstructed}</pre>
+                </div>
+                <p class="info-text">Distancia de Levenshtein: ${this.results.textComparison.levenshtein}</p>
+            `;
+        }
+        
+        // Update system stats
+        const statsBody = document.getElementById('systemStatsBody');
+        statsBody.innerHTML = `
+            <tr><td>SNR configurado</td><td class="metric-value">${this.config.channelValue} dB</td></tr>
+            <tr><td>Modulación</td><td class="metric-value">${this.config.modulation.toUpperCase()}</td></tr>
+            <tr><td>Código de canal</td><td class="metric-value">${this.config.channelCodec === 'none' ? 'Ninguno' : this.config.channelCodec.toUpperCase()}</td></tr>
+            <tr><td>Tasa de código</td><td class="metric-value">${this.config.codeRate}</td></tr>
+        `;
+        
         // Update metrics display
         this.displayMetrics();
         this.displayInfoTheory();
@@ -436,20 +671,28 @@ class Simulator {
 
     displayMetrics() {
         const tbody = document.getElementById('metricsTableBody');
+        const m = this.results.metrics;
+        
+        // Color code BER
+        let berClass = 'metric-good';
+        if (m.ber > 0.01) berClass = 'metric-bad';
+        else if (m.ber > 0.001) berClass = 'metric-warning';
+        
         tbody.innerHTML = `
-            <tr><td>BER (Bit Error Rate)</td><td class="metric-value">${this.results.metrics.ber.toExponential(2)}</td></tr>
-            <tr><td>SER (Symbol Error Rate)</td><td class="metric-value">${this.results.metrics.ser.toExponential(2)}</td></tr>
-            <tr><td>PSNR (dB)</td><td class="metric-value">${this.results.metrics.psnr.toFixed(2)}</td></tr>
-            <tr><td>SSIM</td><td class="metric-value">${this.results.metrics.ssim.toFixed(4)}</td></tr>
+            <tr><td>BER (Bit Error Rate)</td><td class="metric-value ${berClass}">${m.ber.toExponential(2)}</td></tr>
+            <tr><td>SER (Symbol Error Rate)</td><td class="metric-value">${m.ser.toExponential(2)}</td></tr>
+            <tr><td>Errores de bits</td><td class="metric-value">${m.bitErrors} / ${m.totalBits}</td></tr>
         `;
     }
 
     displayInfoTheory() {
         const tbody = document.getElementById('infoTheoryTableBody');
+        const it = this.results.infoTheory;
         tbody.innerHTML = `
-            <tr><td>H(X) Entropía Entrada</td><td class="metric-value">${this.results.infoTheory.entropyX.toFixed(3)} bits</td></tr>
-            <tr><td>H(Y) Entropía Salida</td><td class="metric-value">${this.results.infoTheory.entropyY.toFixed(3)} bits</td></tr>
-            <tr><td>I(X;Y) Info. Mutua</td><td class="metric-value">${this.results.infoTheory.mutualInfo.toFixed(3)} bits</td></tr>
+            <tr><td>H(X) Entropía Entrada</td><td class="metric-value">${it.entropyX.toFixed(3)} bits/símbolo</td></tr>
+            <tr><td>H(Y) Entropía Salida</td><td class="metric-value">${it.entropyY.toFixed(3)} bits/símbolo</td></tr>
+            <tr><td>I(X;Y) Info. Mutua</td><td class="metric-value">${it.mutualInfo.toFixed(3)} bits/símbolo</td></tr>
+            <tr><td>C Capacidad (Shannon)</td><td class="metric-value">${it.capacity.toFixed(3)} bits/canal</td></tr>
         `;
     }
 }

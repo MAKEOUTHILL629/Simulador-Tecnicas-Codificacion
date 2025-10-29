@@ -8,8 +8,23 @@ export class Visualizer {
      * Plot constellation diagram
      */
     static plotConstellation(symbols, elementId, title = 'Diagrama de Constelación') {
-        const real = symbols.map(s => s.real);
-        const imag = symbols.map(s => s.imag);
+        try {
+            if (typeof Plotly === 'undefined') {
+                // Fallback to text description
+                const element = document.getElementById(elementId);
+                element.innerHTML = `
+                    <div style="padding: 1rem; text-align: center;">
+                        <strong>${title}</strong>
+                        <p class="info-text">${symbols.length} símbolos modulados</p>
+                        <p class="info-text">Rango I: [${Math.min(...symbols.map(s => s.real)).toFixed(2)}, ${Math.max(...symbols.map(s => s.real)).toFixed(2)}]</p>
+                        <p class="info-text">Rango Q: [${Math.min(...symbols.map(s => s.imag)).toFixed(2)}, ${Math.max(...symbols.map(s => s.imag)).toFixed(2)}]</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            const real = symbols.map(s => s.real);
+            const imag = symbols.map(s => s.imag);
 
         const trace = {
             x: real,
@@ -58,7 +73,21 @@ export class Visualizer {
      * Plot constellation with ideal points overlay
      */
     static plotConstellationWithIdeal(received, ideal, elementId, title = 'Señal Recibida') {
-        const receivedTrace = {
+        try {
+            if (typeof Plotly === 'undefined') {
+                // Fallback
+                const element = document.getElementById(elementId);
+                element.innerHTML = `
+                    <div style="padding: 1rem; text-align: center;">
+                        <strong>${title}</strong>
+                        <p class="info-text">${received.length} símbolos recibidos</p>
+                        <p class="info-text">Con ruido del canal aplicado</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            const receivedTrace = {
             x: received.map(s => s.real),
             y: received.map(s => s.imag),
             mode: 'markers',
@@ -119,7 +148,25 @@ export class Visualizer {
      * Plot LLR histogram
      */
     static plotLLRHistogram(llrs, elementId) {
-        const trace = {
+        try {
+            if (typeof Plotly === 'undefined') {
+                // Fallback
+                const element = document.getElementById(elementId);
+                const avg = llrs.reduce((a, b) => a + b, 0) / llrs.length;
+                const min = Math.min(...llrs);
+                const max = Math.max(...llrs);
+                element.innerHTML = `
+                    <div style="padding: 1rem; text-align: center;">
+                        <strong>Distribución de LLRs</strong>
+                        <p class="info-text">${llrs.length} LLRs calculados</p>
+                        <p class="info-text">Rango: [${min.toFixed(2)}, ${max.toFixed(2)}]</p>
+                        <p class="info-text">Promedio: ${avg.toFixed(2)}</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            const trace = {
             x: llrs,
             type: 'histogram',
             nbinsx: 50,
