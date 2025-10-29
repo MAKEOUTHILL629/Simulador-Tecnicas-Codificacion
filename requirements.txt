@@ -1,0 +1,18 @@
+# Simulador de Sistemas de Comunicación Multi-Generacional (5G/6G)
+# Requisitos de Python
+
+# Core scientific computing
+numpy>=1.21.0
+scipy>=1.7.0
+
+# Visualization
+matplotlib>=3.4.0
+seaborn>=0.11.0
+
+# Optional: For advanced features
+# Uncomment if needed:
+# scikit-image>=0.18.0  # For advanced image processing
+# librosa>=0.9.0  # For audio processing
+# opencv-python>=4.5.0  # For video processing
+# pandas>=1.3.0  # For data analysis
+# jupyter>=1.0.0  # For interactive notebooks
