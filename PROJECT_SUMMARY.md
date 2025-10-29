@@ -3,18 +3,27 @@
 ## ⚠️ Instalación Rápida
 
 ```bash
-# 1. Instalar dependencias core (funciona en todos los sistemas)
+# 1. Instalar dependencias core
+# Linux/Mac:
 pip install -r requirements.txt
+
+# Windows (IMPORTANTE - evita errores de compilación):
+pip install --only-binary=:all: -r requirements.txt
+# O mejor aún:
+pip install --only-binary=:all: -r requirements-windows.txt
 
 # 2. Ejecutar ejemplos
 python main.py
 
-# 3. Para interfaz web (opcional - puede requerir build tools en Windows)
+# 3. Para interfaz web (opcional)
 pip install streamlit
 streamlit run app.py
 ```
 
-**📝 Problemas en Windows con Streamlit?** Ver `INSTALL.md` para soluciones.
+**📝 Windows con Python 3.14?** 
+- Usa `--only-binary=:all:` siempre
+- O instala Python 3.11 (recomendado para máxima compatibilidad)
+- Ver `INSTALL.md` para guía completa
 
 ---
 

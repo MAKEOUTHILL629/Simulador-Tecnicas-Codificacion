@@ -1,6 +1,9 @@
 # Simulador de Sistemas de Comunicación Multi-Generacional (5G/6G)
 # Requisitos de Python - Core Dependencies
 
+# IMPORTANTE: En Windows, instala con: pip install --only-binary=:all: -r requirements.txt
+# Esto asegura que solo se usen wheels pre-compilados (no requiere compilador C)
+
 # Core scientific computing
 numpy>=1.21.0,<2.0.0
 scipy>=1.7.0,<2.0.0
@@ -17,7 +20,7 @@ pytest-cov>=3.0.0,<6.0.0
 # pip install streamlit
 # On Windows, if you encounter build errors, try:
 # pip install --upgrade pip
-# pip install streamlit --no-build-isolation
+# pip install --only-binary=:all: streamlit
 
 # Optional: For advanced features
 # See requirements-optional.txt for additional packages
