@@ -67,6 +67,9 @@ export class Visualizer {
         };
 
         Plotly.newPlot(elementId, [trace], layout, config);
+        } catch (err) {
+            console.warn('Plotly visualization error:', err);
+        }
     }
 
     /**
@@ -142,6 +145,9 @@ export class Visualizer {
         };
 
         Plotly.newPlot(elementId, [receivedTrace, idealTrace], layout, config);
+        } catch (err) {
+            console.warn('Plotly visualization error:', err);
+        }
     }
 
     /**
@@ -203,6 +209,9 @@ export class Visualizer {
         };
 
         Plotly.newPlot(elementId, [trace], layout, config);
+        } catch (err) {
+            console.warn('Plotly visualization error:', err);
+        }
     }
 
     /**
