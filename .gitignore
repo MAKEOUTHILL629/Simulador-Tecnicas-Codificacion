@@ -34,6 +34,7 @@ env/
 
 # Jupyter Notebook
 .ipynb_checkpoints
+*.ipynb_checkpoints/
 
 # Output files
 plots/*.png
@@ -46,6 +47,10 @@ results/
 *.json
 !requirements*.json
 !package.json
+
+# Cache directory
+cache/
+*.pkl
 
 # OS
 .DS_Store
