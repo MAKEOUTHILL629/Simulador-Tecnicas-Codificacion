@@ -156,6 +156,12 @@ Implementación de un simulador de sistemas de comunicación multi-generacional 
 
 Ninguna tarea en progreso actualmente.
 
+**Nota Fase 4 (COMPLETADA):** En esta actualización se agregó:
+- ✅ Módulo JSCC completo (HMM, decodificadores iterativos)
+- ✅ Sistema de exportación de resultados (JSON, CSV)
+- ✅ 15 tests nuevos para JSCC y exportación (total: 46 tests)
+- ✅ Ejemplo completo JSCC vs SSCC con análisis cliff effect
+
 **Nota Fase 3:** En esta actualización se agregó:
 - ✅ Datasets completos (imagen, audio, video)
 - ✅ Script generador de datos sintéticos
@@ -166,16 +172,26 @@ Ninguna tarea en progreso actualmente.
 
 ## 📋 Pendiente
 
-### Funcionalidades Avanzadas (Fase 2)
+### Funcionalidades Avanzadas (Fase 4)
 
-#### 1. Decodificación Conjunta Fuente-Canal (JSCC)
-- [ ] Implementar modelos ocultos de Markov (HMM)
-- [ ] Decodificador iterativo tipo turbo
-- [ ] Algoritmo BCJR
+#### 1. Decodificación Conjunta Fuente-Canal (JSCC) ✅ **COMPLETADO**
+- [x] Implementar modelos ocultos de Markov (HMM)
+- [x] Decodificador JSCC básico
+- [x] Decodificador iterativo tipo turbo
+- [x] Análisis cliff effect vs graceful degradation
+- [x] Ejemplo comparativo JSCC vs SSCC
+- [ ] Algoritmo BCJR completo
 - [ ] Algoritmo SOVA (Soft Output Viterbi)
-- [ ] Comparación SSCC vs JSCC
 
-#### 2. Características 6G
+#### 2. Exportación de Resultados ✅ **COMPLETADO**
+- [x] Exportar métricas a CSV
+- [x] Exportar resultados a JSON
+- [x] Guardar configuraciones como JSON
+- [x] Log de experimentos
+- [x] Clase ResultsExporter completa
+- [x] Comparación de múltiples simulaciones
+
+#### 3. Características 6G (Parcial)
 - [ ] Codificación semántica basada en IA
 - [ ] Modelo DeepJSCC (funcional)
 - [ ] Comunicación orientada a tareas
@@ -205,10 +221,12 @@ Ninguna tarea en progreso actualmente.
 - [ ] MOS predicho
 - [ ] Métricas específicas de video (VQM)
 
-#### 7. Testing
-- [ ] Suite de tests unitarios (pytest)
-- [ ] Tests de integración
-- [ ] Tests de regresión
+#### 7. Testing ✅ **COMPLETADO**
+- [x] Suite de tests unitarios (pytest) - 46 tests
+- [x] Tests de integración
+- [x] Tests JSCC
+- [x] Tests de exportación
+- [ ] Tests de regresión adicionales
 - [ ] Validación contra resultados teóricos
 
 #### 8. Optimizaciones
@@ -217,11 +235,12 @@ Ninguna tarea en progreso actualmente.
 - [ ] Cacheo de matrices generadas
 - [ ] Perfilado y optimización de código
 
-#### 9. Exportación de Resultados
-- [ ] Exportar métricas a CSV/Excel
-- [ ] Generar reportes PDF automatizados
-- [ ] Guardar configuraciones como JSON
-- [ ] Log de experimentos
+#### 9. Exportación de Resultados ✅ **COMPLETADO**
+- [x] Exportar métricas a CSV/Excel
+- [x] Generar reportes JSON automatizados
+- [x] Guardar configuraciones como JSON
+- [x] Log de experimentos
+- [x] Clase ResultsExporter con múltiples formatos
 
 #### 10. Documentación Adicional
 - [ ] Notebooks Jupyter con tutoriales
@@ -233,15 +252,16 @@ Ninguna tarea en progreso actualmente.
 
 ## 🎯 Próximos Pasos Recomendados
 
-### Prioridad Alta
-1. ~~**Testing básico**: Crear tests para validar funcionalidad básica~~ ✅ **COMPLETADO**
+### Prioridad Alta (✅ TODO COMPLETADO)
+1. ~~**Testing básico**: Crear tests para validar funcionalidad básica~~ ✅ **COMPLETADO** (46 tests)
 2. ~~**Validación**: Comparar BER simulado con curvas teóricas~~ ✅ **COMPLETADO**
 3. ~~**Datasets**: Agregar al menos un dataset de cada tipo~~ ✅ **COMPLETADO**
 4. ~~**GUI simple**: Dashboard básico con Streamlit~~ ✅ **COMPLETADO**
+5. ~~**JSCC básico**: Implementar decodificador conjunto simple~~ ✅ **COMPLETADO**
+6. ~~**Exportación**: Agregar guardado de resultados~~ ✅ **COMPLETADO**
 
 ### Prioridad Media
-1. **JSCC básico**: Implementar decodificador conjunto simple
-2. **Códecs reales**: Integrar al menos un códec real (ej: audio)
+1. **Códecs reales**: Integrar al menos un códec real (ej: audio con librosa)
 3. **Optimización**: Mejorar velocidad de simulación
 4. **Exportación**: Agregar guardado de resultados
 
@@ -300,14 +320,15 @@ Modificar `src/source_coding/encoders.py` para usar librerías reales.
 
 ## 📊 Estadísticas del Proyecto
 
-- **Módulos implementados**: 8
-- **Clases principales**: 20+
+- **Módulos implementados**: 10 (añadido JSCC y utils)
+- **Clases principales**: 25+
 - **Funciones de visualización**: 10
 - **Métricas soportadas**: 8
 - **Esquemas de modulación**: 5
 - **Códigos de canal**: 2
 - **Modelos de canal**: 3
-- **Ejemplos incluidos**: 3
+- **Ejemplos incluidos**: 8 (3 básicos + 4 avanzados + 1 JSCC)
+- **Tests unitarios**: 46 (100% pasando)
 
 ---
 

@@ -40,6 +40,13 @@ plots/*.png
 plots/*.pdf
 *.log
 
+# Results directory
+results/
+*.csv
+*.json
+!requirements*.json
+!package.json
+
 # OS
 .DS_Store
 Thumbs.db
